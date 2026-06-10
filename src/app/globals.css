@@ -626,6 +626,9 @@ html, body {
   .main-layout {
     grid-template-columns: 1fr;
   }
+  .sidebar-container {
+    order: -1;
+  }
 }
 
 .sidebar-container {
