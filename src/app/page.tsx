@@ -70,6 +70,12 @@ export default function Home() {
   // Scroll to Top state
   const [showScrollTop, setShowScrollTop] = useState(false);
 
+  // PWA Install Prompt States
+  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+  const [showInstallBanner, setShowInstallBanner] = useState(false);
+  const [isIos, setIsIos] = useState(false);
+  const [showIosGuide, setShowIosGuide] = useState(false);
+
   // Register window scroll listener for Scroll to Top button
   useEffect(() => {
     const handleScroll = () => {
@@ -82,6 +88,81 @@ export default function Home() {
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
+
+  // PWA Install Listener & Setup
+  useEffect(() => {
+    const isStandalone = window.matchMedia('(display-mode: standalone)').matches;
+    const isDismissed = localStorage.getItem('timetable_install_dismissed') === 'true';
+
+    if (isStandalone || isDismissed) return;
+
+    // Detect mobile or tablet viewports
+    const isMobileOrTablet = window.innerWidth <= 1024;
+    if (!isMobileOrTablet) return;
+
+    // Detect iOS
+    const userAgent = window.navigator.userAgent.toLowerCase();
+    const iosDetected = /iphone|ipad|ipod/.test(userAgent);
+    setIsIos(iosDetected);
+
+    if (iosDetected) {
+      setShowInstallBanner(true);
+    }
+
+    const handleBeforeInstallPrompt = (e: Event) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+      setShowInstallBanner(true);
+    };
+
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    };
+  }, []);
+
+  // Accessibility Font Size Checker
+  useEffect(() => {
+    const checkFontSize = () => {
+      const htmlEl = document.documentElement;
+      const computedSize = parseFloat(window.getComputedStyle(htmlEl).fontSize);
+      if (computedSize >= 18) {
+        htmlEl.classList.add('accessibility-large-text');
+        const scale = computedSize / 16;
+        htmlEl.style.setProperty('--font-scale-factor', scale.toString());
+      } else {
+        htmlEl.classList.remove('accessibility-large-text');
+        htmlEl.style.setProperty('--font-scale-factor', '1');
+      }
+    };
+
+    checkFontSize();
+    window.addEventListener('resize', checkFontSize);
+    return () => window.removeEventListener('resize', checkFontSize);
+  }, []);
+
+  const handleInstallClick = async () => {
+    if (deferredPrompt) {
+      try {
+        deferredPrompt.prompt();
+        const { outcome } = await deferredPrompt.userChoice;
+        if (outcome === 'accepted') {
+          setDeferredPrompt(null);
+          setShowInstallBanner(false);
+        }
+      } catch (err) {
+        console.error('PWA install error:', err);
+      }
+    } else if (isIos) {
+      setShowIosGuide(true);
+    }
+  };
+
+  const handleDismissBanner = () => {
+    localStorage.setItem('timetable_install_dismissed', 'true');
+    setShowInstallBanner(false);
+  };
   
   // Show a visual toast message
   const showToast = (message: string) => {
@@ -1567,6 +1648,69 @@ export default function Home() {
           <div className="toast">
             <Check size={16} style={{ color: 'var(--accent-color)' }} />
             <span>{toastMessage}</span>
+          </div>
+        </div>
+      )}
+
+      {/* PWA Install Banner */}
+      {showInstallBanner && (
+        <div className="install-banner">
+          <div className="install-banner-content">
+            <div className="install-banner-text">
+              📱 <strong>Install Timetable Exporter</strong> for instant access and a home screen shortcut!
+            </div>
+            <div className="install-banner-actions">
+              <button 
+                onClick={handleInstallClick} 
+                className="install-btn"
+                type="button"
+              >
+                {isIos ? 'How to Install' : 'Install'}
+              </button>
+              <button 
+                onClick={handleDismissBanner} 
+                className="install-dismiss-btn"
+                type="button"
+              >
+                Dismiss
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* iOS Safari Installation Guide Modal */}
+      {showIosGuide && (
+        <div className="ios-guide-overlay" onClick={() => setShowIosGuide(false)}>
+          <div className="ios-guide-card" onClick={e => e.stopPropagation()}>
+            <h3 className="ios-guide-title">Install on iOS</h3>
+            <div className="ios-steps">
+              <div className="ios-step">
+                <span className="ios-step-num">1</span>
+                <span className="ios-step-text">
+                  Tap the <strong>Share</strong> button in Safari&apos;s toolbar (at the bottom of the screen).
+                </span>
+              </div>
+              <div className="ios-step">
+                <span className="ios-step-num">2</span>
+                <span className="ios-step-text">
+                  Scroll down the share options list and select <strong>Add to Home Screen</strong>.
+                </span>
+              </div>
+              <div className="ios-step">
+                <span className="ios-step-num">3</span>
+                <span className="ios-step-text">
+                  Tap <strong>Add</strong> in the top-right corner to complete the installation.
+                </span>
+              </div>
+            </div>
+            <button 
+              onClick={() => setShowIosGuide(false)} 
+              className="ios-guide-close-btn"
+              type="button"
+            >
+              Close Guide
+            </button>
           </div>
         </div>
       )}

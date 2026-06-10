@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1E3A8A" /> <stop offset="100%" stop-color="#0F172A" /> </linearGradient>
+    
+    <linearGradient id="accentGrad" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#38BDF8" /> <stop offset="100%" stop-color="#818CF8" /> </linearGradient>
+    
+    <filter id="dropShadow" x="-10%" y="-10%" width="130%" height="130%">
+      <feDropShadow dx="0" dy="12" stdDeviation="8" flood-color="#000000" flood-opacity="0.4" />
+    </filter>
+  </defs>
+
+  <rect x="32" y="32" width="448" height="448" rx="96" fill="url(#bgGrad)" />
+
+  <g filter="url(#dropShadow)">
+    <rect x="144" y="144" width="224" height="224" rx="24" fill="none" stroke="#FFFFFF" stroke-width="16" stroke-opacity="0.2" />
+    
+    <rect x="180" y="180" width="70" height="40" rx="8" fill="#FFFFFF" fill-opacity="0.9" />
+    <rect x="262" y="180" width="70" height="40" rx="8" fill="url(#accentGrad)" />
+    <rect x="180" y="236" width="152" height="40" rx="8" fill="#FFFFFF" fill-opacity="0.4" />
+    
+    <path d="M 180 316 
+             L 280 316 
+             A 12 12 0 0 0 292 304 
+             L 292 292 
+             L 324 324 
+             L 292 356 
+             L 292 344 
+             A 12 12 0 0 0 280 332 
+             L 180 332 
+             A 8 8 0 0 1 172 324 
+             A 8 8 0 0 1 180 316 Z" 
+          fill="url(#accentGrad)" />
+  </g>
+</svg>

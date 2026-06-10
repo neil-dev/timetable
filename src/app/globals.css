@@ -1636,3 +1636,258 @@ html, body {
   }
 }
 
+/* Sticky Timeslot Column for horizontal scroll */
+.calendar-grid > .calendar-header-cell:first-child {
+  position: sticky !important;
+  left: 0 !important;
+  z-index: 12 !important;
+  background-color: var(--card-bg) !important;
+  border-right: 2px solid var(--card-border) !important;
+  box-shadow: 4px 0 8px -4px rgba(0, 0, 0, 0.15) !important;
+}
+
+.calendar-grid .calendar-time-cell {
+  position: sticky !important;
+  left: 0 !important;
+  z-index: 11 !important;
+  background-color: var(--card-bg) !important;
+  border-right: 2px solid var(--card-border) !important;
+  box-shadow: 4px 0 8px -4px rgba(0, 0, 0, 0.15) !important;
+}
+
+/* Install PWA Banner */
+.install-banner {
+  position: fixed !important;
+  bottom: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  z-index: 999 !important;
+  background: rgba(15, 23, 42, 0.9) !important; /* Slate 900 Glassmorphism */
+  backdrop-filter: blur(12px) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
+  border-top: 1px solid rgba(255, 255, 255, 0.1) !important;
+  padding: 1rem !important;
+  box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.25) !important;
+  animation: slideUp 0.3s ease-out !important;
+}
+
+@keyframes slideUp {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+
+.install-banner-content {
+  max-width: 1200px !important;
+  margin: 0 auto !important;
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  gap: 1.5rem !important;
+}
+
+.install-banner-text {
+  color: #f8fafc !important;
+  font-size: 0.9rem !important;
+  font-weight: 500 !important;
+  line-height: 1.4 !important;
+  text-align: left !important;
+}
+
+.install-banner-actions {
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.75rem !important;
+}
+
+.install-btn {
+  background: linear-gradient(135deg, var(--primary-color), var(--accent-color)) !important;
+  color: white !important;
+  border: none !important;
+  font-weight: 600 !important;
+  font-size: 0.85rem !important;
+  padding: 0.5rem 1.25rem !important;
+  border-radius: var(--radius-sm) !important;
+  cursor: pointer !important;
+  transition: transform 0.15s ease, opacity 0.15s ease !important;
+}
+
+.install-btn:hover {
+  transform: scale(1.02) !important;
+  opacity: 0.95 !important;
+}
+
+.install-dismiss-btn {
+  background: transparent !important;
+  color: #94a3b8 !important;
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
+  font-weight: 500 !important;
+  font-size: 0.85rem !important;
+  padding: 0.5rem 1rem !important;
+  border-radius: var(--radius-sm) !important;
+  cursor: pointer !important;
+  transition: background 0.15s ease, color 0.15s ease !important;
+}
+
+.install-dismiss-btn:hover {
+  background: rgba(255, 255, 255, 0.05) !important;
+  color: #f8fafc !important;
+}
+
+/* iOS Safari Guide Modal */
+.ios-guide-overlay {
+  position: fixed !important;
+  inset: 0 !important;
+  background: rgba(0, 0, 0, 0.6) !important;
+  z-index: 1000 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 1rem !important;
+  backdrop-filter: blur(4px) !important;
+  -webkit-backdrop-filter: blur(4px) !important;
+  animation: fadeIn 0.2s ease-out !important;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.ios-guide-card {
+  background: var(--card-bg) !important;
+  border: 1px solid var(--card-border) !important;
+  border-radius: var(--radius-lg) !important;
+  padding: 2rem !important;
+  max-width: 420px !important;
+  width: 100% !important;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.25) !important;
+  animation: scaleIn 0.25s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+}
+
+@keyframes scaleIn {
+  from { transform: scale(0.9); }
+  to { transform: scale(1); }
+}
+
+.ios-guide-title {
+  color: var(--text-primary) !important;
+  font-size: 1.25rem !important;
+  font-weight: 700 !important;
+  margin-bottom: 1.25rem !important;
+  text-align: center !important;
+}
+
+.ios-steps {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 1.25rem !important;
+  margin-bottom: 1.5rem !important;
+  text-align: left !important;
+}
+
+.ios-step {
+  display: flex !important;
+  align-items: flex-start !important;
+  gap: 1rem !important;
+}
+
+.ios-step-num {
+  width: 24px !important;
+  height: 24px !important;
+  border-radius: 50% !important;
+  background: var(--primary-color) !important;
+  color: white !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  font-size: 0.8rem !important;
+  font-weight: 700 !important;
+  flex-shrink: 0 !important;
+}
+
+.ios-step-text {
+  color: var(--text-secondary) !important;
+  font-size: 0.9rem !important;
+  line-height: 1.4 !important;
+}
+
+.ios-step-text strong {
+  color: var(--text-primary) !important;
+}
+
+.ios-guide-close-btn {
+  width: 100% !important;
+  background: rgba(255, 255, 255, 0.05) !important;
+  color: var(--text-primary) !important;
+  border: 1px solid var(--card-border) !important;
+  border-radius: var(--radius-md) !important;
+  padding: 0.75rem !important;
+  font-weight: 600 !important;
+  cursor: pointer !important;
+  transition: background 0.15s ease !important;
+}
+
+.ios-guide-close-btn:hover {
+  background: rgba(255, 255, 255, 0.1) !important;
+}
+
+/* Accessibility Support for Large Font Devices */
+:root {
+  --font-scale-factor: 1;
+}
+
+.accessibility-large-text .calendar-event-pill {
+  font-size: calc(var(--font-scale-factor) * 0.68rem) !important;
+  padding: 0.45rem 0.35rem !important;
+}
+
+.accessibility-large-text .calendar-event-room-label {
+  font-size: calc(var(--font-scale-factor) * 0.62rem) !important;
+}
+
+.accessibility-large-text .calendar-time-cell {
+  font-size: calc(var(--font-scale-factor) * 0.8rem) !important;
+}
+
+.accessibility-large-text .calendar-header-cell {
+  font-size: calc(var(--font-scale-factor) * 0.82rem) !important;
+}
+
+.accessibility-large-text .selected-course-tag {
+  font-size: calc(var(--font-scale-factor) * 0.88rem) !important;
+  padding: 0.5rem 0.75rem !important;
+}
+
+.accessibility-large-text .course-card-title {
+  font-size: calc(var(--font-scale-factor) * 0.98rem) !important;
+}
+
+.accessibility-large-text .course-card-details {
+  font-size: calc(var(--font-scale-factor) * 0.82rem) !important;
+}
+
+@media (max-width: 768px) {
+  .install-banner-content {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 1rem !important;
+    text-align: center !important;
+  }
+  
+  .install-banner-text {
+    text-align: center !important;
+  }
+  
+  .install-banner-actions {
+    justify-content: center !important;
+    width: 100% !important;
+  }
+  
+  .install-btn, .install-dismiss-btn {
+    flex: 1 !important;
+    text-align: center !important;
+    padding: 0.6rem !important;
+  }
+}
+
+

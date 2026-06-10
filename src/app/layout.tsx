@@ -15,6 +15,12 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Term IV Timetable Exporter",
   description: "Convert your Google Sheet course timetable into a personal iCal calendar (.ics) for Google Calendar, Apple Calendar, or Outlook.",
+  manifest: "/manifest.json",
+  icons: {
+    icon: "/icon.svg",
+    shortcut: "/icon.svg",
+    apple: "/icon.svg",
+  },
 };
 
 export default function RootLayout({
