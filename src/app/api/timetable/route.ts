@@ -244,8 +244,7 @@ export async function GET(request: Request) {
 
     // Initialize iCal Calendar
     const calendar = new ICalCalendar({
-      name: 'Class Timetable',
-      timezone: 'Asia/Kolkata',
+      name: 'timetable',
     });
 
     const jsonEvents: any[] = [];
