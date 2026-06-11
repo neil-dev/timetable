@@ -1929,6 +1929,47 @@ html, body {
   box-shadow: var(--shadow-md);
 }
 
+/* Responsive Tab switcher for mobile screens */
+@media (max-width: 640px) {
+  .tab-navigation {
+    gap: 0.4rem !important;
+    padding-bottom: 0.5rem !important;
+    justify-content: space-between !important;
+  }
+  .tab-nav-item {
+    flex: 1 !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 0.6rem 0.2rem !important;
+    border-radius: var(--radius-md) !important;
+    gap: 0 !important;
+  }
+  .tab-nav-item svg {
+    width: 20px !important;
+    height: 20px !important;
+  }
+  .desktop-tab-label {
+    display: none !important;
+  }
+  .mobile-tab-label {
+    display: inline !important;
+    font-size: 0.75rem !important;
+    font-weight: 700 !important;
+    margin-top: 0.25rem !important;
+    text-align: center !important;
+  }
+}
+
+@media (min-width: 641px) {
+  .desktop-tab-label {
+    display: inline !important;
+  }
+  .mobile-tab-label {
+    display: none !important;
+  }
+}
+
 /* Bus Schedule Styles */
 .bus-realtime-grid {
   display: grid;

@@ -1096,7 +1096,8 @@ export default function Home() {
             type="button"
           >
             <CalendarIcon size={18} />
-            <span>Timetable</span>
+            <span className="desktop-tab-label">Timetable</span>
+            <span className="mobile-tab-label">Timetable</span>
           </button>
           <button 
             id="tab-bus"
@@ -1105,7 +1106,8 @@ export default function Home() {
             type="button"
           >
             <Bus size={18} />
-            <span>Bus Schedule</span>
+            <span className="desktop-tab-label">Bus Schedule</span>
+            <span className="mobile-tab-label">Bus</span>
           </button>
           <button 
             id="tab-mess"
@@ -1114,7 +1116,8 @@ export default function Home() {
             type="button"
           >
             <Utensils size={18} />
-            <span>Mess Menu</span>
+            <span className="desktop-tab-label">Mess Menu</span>
+            <span className="mobile-tab-label">Menu</span>
           </button>
         </nav>
 
