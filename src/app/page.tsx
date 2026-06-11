@@ -15,8 +15,15 @@ import {
   Grid,
   UploadCloud,
   FileText,
-  ArrowUp
+  ArrowUp,
+  Bus,
+  Utensils,
+  Clock,
+  ChevronRight,
+  ChevronDown,
+  AlertTriangle
 } from 'lucide-react';
+import busScheduleData from '../../busSchedule.json';
 
 interface Course {
   name: string;
@@ -40,6 +47,49 @@ interface TimetableEvent {
   isCancelled?: boolean;
 }
 
+// Helper: Get Current Time in Indian Standard Time (IST)
+const getIstNow = () => {
+  try {
+    const now = new Date();
+    // Format to get individual components in Asia/Kolkata timezone
+    const formatter = new Intl.DateTimeFormat('en-US', {
+      timeZone: 'Asia/Kolkata',
+      year: 'numeric',
+      month: 'numeric',
+      day: 'numeric',
+      hour: 'numeric',
+      minute: 'numeric',
+      second: 'numeric',
+      hour12: false
+    });
+    const parts = formatter.formatToParts(now);
+    const getVal = (type: string) => parseInt(parts.find(p => p.type === type)?.value || '0', 10);
+    
+    const year = getVal('year');
+    const month = getVal('month') - 1; // 0-indexed month
+    const day = getVal('day');
+    const hour = getVal('hour');
+    const minute = getVal('minute');
+    const second = getVal('second');
+    
+    // Construct a new Date using local components
+    return new Date(year, month, day, hour, minute, second);
+  } catch {
+    return new Date();
+  }
+};
+
+// Helper: Get Today's Day of the Week in IST (uppercase)
+const getTodayDayName = () => {
+  const days = ['SUNDAY', 'MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY'];
+  try {
+    const formatter = new Intl.DateTimeFormat('en-US', { weekday: 'long', timeZone: 'Asia/Kolkata' });
+    return formatter.format(new Date()).toUpperCase();
+  } catch {
+    return days[getIstNow().getDay()];
+  }
+};
+
 export default function Home() {
   const [courses, setCourses] = useState<Course[]>([]);
   // selectedCourses holds: { [abbr]: selectedSection (e.g. 'A', 'B' or '') }
@@ -52,6 +102,35 @@ export default function Home() {
   const [origin, setOrigin] = useState('');
   const [allTimeSlots, setAllTimeSlots] = useState<string[]>([]);
   const [showPdfImportAlert, setShowPdfImportAlert] = useState(false);
+
+  // Dashboard Tabs & Extra States
+  const [currentTab, setCurrentTab] = useState<'timetable' | 'bus' | 'mess'>('timetable');
+  const [busSearchQuery, setBusSearchQuery] = useState('');
+  const [busRefreshTime, setBusRefreshTime] = useState<Date | null>(null);
+  
+  const [messMenuData, setMessMenuData] = useState<any>(null);
+  const [loadingMessMenu, setLoadingMessMenu] = useState(false);
+  const [messMenuError, setMessMenuError] = useState('');
+  const [messMenuDay, setMessMenuDay] = useState('');
+  const [isDayDropdownOpen, setIsDayDropdownOpen] = useState(false);
+  const dayDropdownRef = useRef<HTMLDivElement>(null);
+
+  // Initialize Bus Time and Calendar Week on Mount
+  useEffect(() => {
+    const nowIst = getIstNow();
+    setBusRefreshTime(nowIst);
+  }, []);
+
+  // Click outside to close custom day selection dropdown
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dayDropdownRef.current && !dayDropdownRef.current.contains(event.target as Node)) {
+        setIsDayDropdownOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   // PDF Upload & Parse States
   const [parsingPdf, setParsingPdf] = useState(false);
@@ -175,16 +254,54 @@ export default function Home() {
     }, 3000);
   };
 
+  // Fetch Mess Menu once when tab switches to 'mess'
+  useEffect(() => {
+    if (currentTab !== 'mess' || messMenuData) return;
+
+    const fetchMenu = async () => {
+      try {
+        setLoadingMessMenu(true);
+        setMessMenuError('');
+        const res = await fetch('/api/mess-menu');
+        if (!res.ok) {
+          throw new Error('Failed to fetch mess menu');
+        }
+        const data = await res.json();
+        setMessMenuData(data);
+      } catch (err: any) {
+        setMessMenuError(err.message || 'Error loading mess menu');
+      } finally {
+        setLoadingMessMenu(false);
+      }
+    };
+
+    fetchMenu();
+  }, [currentTab, messMenuData]);
+
+  // Set default day when messMenuData loads
+  useEffect(() => {
+    if (messMenuData && !messMenuDay) {
+      setMessMenuDay(getTodayDayName());
+    }
+  }, [messMenuData, messMenuDay]);
+
   // Weekly Calendar Navigation Date State (Monday of active week)
   const [calendarWeekStart, setCalendarWeekStart] = useState<Date>(() => {
-    const today = new Date();
+    // Return a stable fallback date for initial SSR to avoid hydration mismatch
+    return new Date('2026-06-08T00:00:00+05:30');
+  });
+
+  // Calculate actual week start on client mount
+  useEffect(() => {
+    const nowIst = getIstNow();
+    const today = new Date(nowIst);
     today.setHours(0, 0, 0, 0);
     const day = today.getDay();
     const diff = day === 0 ? -6 : 1 - day;
     const monday = new Date(today);
     monday.setDate(today.getDate() + diff);
-    return monday;
-  });
+    setCalendarWeekStart(monday);
+  }, []);
 
   // Auto-scroll calendar view to the current day on mobile/tablet viewports
   useEffect(() => {
@@ -623,8 +740,8 @@ export default function Home() {
   const filteredEventsForList = useMemo(() => {
     if (!generatedEvents) return [];
     
-    // Get today local date at midnight (June 10, 2026 based on workspace local time)
-    const today = new Date();
+    // Get today local date at midnight in IST
+    const today = getIstNow();
     today.setHours(0, 0, 0, 0);
     
     // Get start (Monday) and end (Sunday) of current week
@@ -785,7 +902,7 @@ export default function Home() {
   };
 
   const handleJumpToCurrentWeek = () => {
-    const today = new Date();
+    const today = getIstNow();
     today.setHours(0, 0, 0, 0);
     const day = today.getDay();
     const diff = day === 0 ? -6 : 1 - day;
@@ -804,12 +921,120 @@ export default function Home() {
     if (slots.length === 0 && generatedEvents) {
       slots = Array.from(new Set(generatedEvents.map(e => e.timeSlot)));
     }
+    
+    // Filter slots based on user requirements:
+    slots = slots.filter(slot => {
+      const normalizedSlot = slot.trim().replace(/\s+/g, '').replace(/\./g, ':');
+      
+      // 1. Exclude the 13:30-14:30 slot
+      if (normalizedSlot === '13:30-14:30') {
+        return false;
+      }
+      
+      // 2. Only show 22:00-23:15 if the user has a course in that slot
+      if (normalizedSlot === '22:00-23:15') {
+        if (!generatedEvents) return false;
+        return generatedEvents.some(e => {
+          const eSlotNormalized = e.timeSlot.trim().replace(/\s+/g, '').replace(/\./g, ':');
+          return eSlotNormalized === '22:00-23:15';
+        });
+      }
+      
+      return true;
+    });
+
     return slots.sort((a, b) => {
-      const aStart = a.split('-')[0].trim().replace('.', ':');
-      const bStart = b.split('-')[0].trim().replace('.', ':');
+      const aStart = a.split('-')[0].trim().replace(/\./g, ':');
+      const bStart = b.split('-')[0].trim().replace(/\./g, ':');
       return aStart.localeCompare(bStart);
     });
   }, [allTimeSlots, generatedEvents]);
+
+  // ----------------------------------------------------
+  // Bus Schedule Memos & Helper
+  // ----------------------------------------------------
+  const getBusMinutes = (timeStr: string) => {
+    const [time, modifier] = timeStr.split(' ');
+    const [hoursStr, minutesStr] = time.split(':');
+    let hours = parseInt(hoursStr, 10);
+    const minutes = parseInt(minutesStr, 10);
+    
+    if (modifier === 'PM' && hours < 12) {
+      hours += 12;
+    }
+    if (modifier === 'AM' && hours === 12) {
+      hours = 0;
+    }
+    return hours * 60 + minutes;
+  };
+
+  const sortedBuses = useMemo(() => {
+    const transformed = busScheduleData.map(b => {
+      if (b.tripsExtendedToMainGate && b.tripsExtendedToMainGate.trim() !== "") {
+        // tripsExtendedToMainGate becomes the To column entry
+        // and the other two (original via and original to) are the via spots
+        const originalVia = b.via ? b.via.trim() : "";
+        const originalTo = b.to ? b.to.trim() : "";
+        
+        let newVia = "";
+        if (originalVia && originalTo) {
+          newVia = `${originalVia}, ${originalTo}`;
+        } else {
+          newVia = originalVia || originalTo;
+        }
+        
+        return {
+          ...b,
+          to: b.tripsExtendedToMainGate.trim(),
+          via: newVia,
+          tripsExtendedToMainGate: ""
+        };
+      }
+      return b;
+    });
+    return transformed.sort((a, b) => getBusMinutes(a.time) - getBusMinutes(b.time));
+  }, []);
+
+  const busCalculations = useMemo(() => {
+    if (!busRefreshTime) return { nextBus: null, upcomingBuses: [] };
+
+    const currentMinutes = busRefreshTime.getHours() * 60 + busRefreshTime.getMinutes();
+    
+    // Find next bus for today
+    const next = sortedBuses.find(b => getBusMinutes(b.time) >= currentMinutes) || null;
+    
+    // Find upcoming buses for today (in next 3 hours)
+    const upcoming = next 
+      ? sortedBuses
+          .filter(b => {
+            const bMin = getBusMinutes(b.time);
+            return b.slNo > next.slNo && bMin <= currentMinutes + 180;
+          })
+          .slice(0, 4)
+      : [];
+
+    return { nextBus: next, upcomingBuses: upcoming };
+  }, [busRefreshTime, sortedBuses]);
+
+  const filteredBuses = useMemo(() => {
+    const query = busSearchQuery.toLowerCase().trim();
+    if (!query) return sortedBuses;
+    return sortedBuses.filter(
+      b => 
+        b.from.toLowerCase().includes(query) ||
+        b.to.toLowerCase().includes(query) ||
+        b.via.toLowerCase().includes(query) ||
+        (b.tripsExtendedToMainGate && b.tripsExtendedToMainGate.toLowerCase().includes(query))
+    );
+  }, [busSearchQuery, sortedBuses]);
+
+  // ----------------------------------------------------
+  // Mess Menu Memo
+  // ----------------------------------------------------
+  const activeDayMenu = useMemo(() => {
+    if (!messMenuData || !messMenuData.menu || !messMenuDay) return null;
+    return messMenuData.menu[messMenuDay];
+  }, [messMenuData, messMenuDay]);
 
   return (
     <>
@@ -862,349 +1087,677 @@ export default function Home() {
           </div>
         </header>
 
+        {/* Main Tab Switcher */}
+        <nav className="tab-navigation" aria-label="Main Dashboard Navigation">
+          <button 
+            id="tab-timetable"
+            className={`tab-nav-item ${currentTab === 'timetable' ? 'active' : ''}`}
+            onClick={() => setCurrentTab('timetable')}
+            type="button"
+          >
+            <CalendarIcon size={18} />
+            <span>Timetable</span>
+          </button>
+          <button 
+            id="tab-bus"
+            className={`tab-nav-item ${currentTab === 'bus' ? 'active' : ''}`}
+            onClick={() => setCurrentTab('bus')}
+            type="button"
+          >
+            <Bus size={18} />
+            <span>Bus Schedule</span>
+          </button>
+          <button 
+            id="tab-mess"
+            className={`tab-nav-item ${currentTab === 'mess' ? 'active' : ''}`}
+            onClick={() => setCurrentTab('mess')}
+            type="button"
+          >
+            <Utensils size={18} />
+            <span>Mess Menu</span>
+          </button>
+        </nav>
 
-        {/* Error State */}
-        {error && (
-          <div className="glass-card" style={{ borderColor: 'rgba(239, 68, 68, 0.4)', background: 'rgba(239, 68, 68, 0.05)' }}>
-            <h3 style={{ color: '#ef4444', marginBottom: '0.5rem' }}>Unable to retrieve schedule</h3>
-            <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>{error}</p>
-            <button 
-              className="btn btn-secondary" 
-              style={{ marginTop: '1rem' }} 
-              onClick={() => window.location.reload()}
-            >
-              <RefreshCw size={14} /> Retry Connection
-            </button>
-          </div>
-        )}
-
-        <main id="main-content" style={{ display: 'flex', flexDirection: 'column', gap: '2.5rem' }}>
-          {/* Skeleton loader for the preview section when generating but events not loaded yet */}
-          {generating && !generatedEvents && (
-            <section className="glass-card" style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }} aria-busy="true" aria-live="polite">
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem', borderBottom: '1px solid var(--card-border)', paddingBottom: '1rem' }}>
-                <div style={{ width: '200px' }} className="skeleton-row">
-                  <div className="skeleton-text" style={{ width: '80%', height: '1.25rem' }}></div>
-                  <div className="skeleton-text" style={{ width: '60%', height: '0.8rem', marginTop: '0.25rem' }}></div>
-                </div>
-                <div style={{ width: '120px', height: '2.5rem', borderRadius: 'var(--radius-md)' }} className="skeleton-text"></div>
+        {/* Timetable Tab Content */}
+        {currentTab === 'timetable' && (
+          <>
+            {/* Error State */}
+            {error && (
+              <div className="glass-card" style={{ borderColor: 'rgba(239, 68, 68, 0.4)', background: 'rgba(239, 68, 68, 0.05)' }}>
+                <h3 style={{ color: '#ef4444', marginBottom: '0.5rem' }}>Unable to retrieve schedule</h3>
+                <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>{error}</p>
+                <button 
+                  className="btn btn-secondary" 
+                  style={{ marginTop: '1rem' }} 
+                  onClick={() => window.location.reload()}
+                >
+                  <RefreshCw size={14} /> Retry Connection
+                </button>
               </div>
-              
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                <div style={{ display: 'flex', gap: '1.5rem', borderBottom: '1px solid var(--card-border)', paddingBottom: '0.75rem', overflow: 'hidden' }}>
-                  <div className="skeleton-text" style={{ width: '100px', height: '1rem', flexShrink: 0 }}></div>
-                  <div className="skeleton-text" style={{ width: '120px', height: '1rem', flexShrink: 0 }}></div>
-                  <div className="skeleton-text" style={{ width: '120px', height: '1rem', flexShrink: 0 }}></div>
-                  <div className="skeleton-text" style={{ width: '120px', height: '1rem', flexShrink: 0 }}></div>
-                  <div className="skeleton-text" style={{ width: '120px', height: '1rem', flexShrink: 0 }}></div>
-                </div>
-                {[1, 2, 3].map(i => (
-                  <div key={i} style={{ display: 'flex', gap: '1.5rem', alignItems: 'center', padding: '0.5rem 0', overflow: 'hidden' }}>
-                    <div className="skeleton-text" style={{ width: '100px', height: '1.5rem', flexShrink: 0 }}></div>
-                    <div className="skeleton-text" style={{ flex: 1, height: '2.5rem', borderRadius: '6px', minWidth: '120px' }}></div>
-                    <div className="skeleton-text" style={{ width: '80px', height: '1.5rem', flexShrink: 0 }}></div>
+            )}
+
+            <main id="main-content" style={{ display: 'flex', flexDirection: 'column', gap: '2.5rem' }}>
+              {/* Skeleton loader for the preview section when generating but events not loaded yet */}
+              {generating && !generatedEvents && (
+                <section className="glass-card" style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }} aria-busy="true" aria-live="polite">
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem', borderBottom: '1px solid var(--card-border)', paddingBottom: '1rem' }}>
+                    <div style={{ width: '200px' }} className="skeleton-row">
+                      <div className="skeleton-text" style={{ width: '80%', height: '1.25rem' }}></div>
+                      <div className="skeleton-text" style={{ width: '60%', height: '0.8rem', marginTop: '0.25rem' }}></div>
+                    </div>
+                    <div style={{ width: '120px', height: '2.5rem', borderRadius: 'var(--radius-md)' }} className="skeleton-text"></div>
                   </div>
-                ))}
-              </div>
-            </section>
-          )}
-
-          {/* Timetable Preview & Actions Section */}
-          {generatedEvents && (
-            <section className="glass-card" style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem', borderBottom: '1px solid var(--card-border)', paddingBottom: '1rem' }}>
-                <div>
-                  <h2 style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--text-primary)' }}>
-                    Generated Timetable Preview
-                  </h2>
-                  <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginTop: '0.1rem' }}>
-                    Found {generatedEvents.length} class slots in the database
-                  </p>
-                </div>
-                
-                <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', flexWrap: 'wrap' }}>
-                  {/* Sync Calendar Button */}
-                  <button
-                    className="btn btn-primary"
-                    onClick={() => setIsExportModalOpen(true)}
-                    type="button"
-                    style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', padding: '0.5rem 1rem', fontSize: '0.85rem' }}
-                  >
-                    <RefreshCw size={14} /> Sync Calendar
-                  </button>
-
-                  {/* Preview Tab Control */}
-                  <div className="preview-tabs" style={{ marginBottom: 0 }}>
-                    <button 
-                      className={`preview-tab-btn ${previewTab === 'list' ? 'active' : ''}`}
-                      onClick={() => setPreviewTab('list')}
-                      type="button"
-                      style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}
-                    >
-                      <List size={15} /> List View
-                    </button>
-                    <button 
-                      className={`preview-tab-btn ${previewTab === 'calendar' ? 'active' : ''}`}
-                      onClick={() => setPreviewTab('calendar')}
-                      type="button"
-                      style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}
-                    >
-                      <Grid size={15} /> Calendar format
-                    </button>
-                  </div>
-                </div>
-              </div>
-
-              {/* List / Calendar View Rendering */}
-              {generatedEvents.length === 0 ? (
-                <div style={{ padding: '3rem 1rem', textAlign: 'center', background: 'rgba(0,0,0,0.01)', borderRadius: '12px' }}>
-                  <p style={{ fontWeight: 600, color: 'var(--text-secondary)' }}>No classes scheduled</p>
-                  <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginTop: '0.25rem' }}>
-                    There are no scheduled lectures in Term IV for the selected courses in the Google Sheet database.
-                  </p>
-                </div>
-              ) : previewTab === 'list' ? (
-                /* List View */
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                  {/* List Filter Tabs */}
-                  <div className="list-filter-tabs">
-                    <button 
-                      className={`list-filter-btn ${listFilter === 'today' ? 'active' : ''}`}
-                      onClick={() => setListFilter('today')}
-                      type="button"
-                    >
-                      Today
-                    </button>
-                    <button 
-                      className={`list-filter-btn ${listFilter === 'week' ? 'active' : ''}`}
-                      onClick={() => setListFilter('week')}
-                      type="button"
-                    >
-                      This Week
-                    </button>
-                    <button 
-                      className={`list-filter-btn ${listFilter === 'full' ? 'active' : ''}`}
-                      onClick={() => setListFilter('full')}
-                      type="button"
-                    >
-                      Full Term
-                    </button>
-                  </div>
-
-                  <div className="timeline-list">
-                    {Object.keys(groupedEvents).length === 0 ? (
-                      <div style={{ padding: '2rem 1rem', textAlign: 'center', background: 'rgba(0,0,0,0.01)', borderRadius: '12px' }}>
-                        <p style={{ fontWeight: 600, color: 'var(--text-secondary)' }}>No classes scheduled for this view</p>
+                  
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                    <div style={{ display: 'flex', gap: '1.5rem', borderBottom: '1px solid var(--card-border)', paddingBottom: '0.75rem', overflow: 'hidden' }}>
+                      <div className="skeleton-text" style={{ width: '100px', height: '1rem', flexShrink: 0 }}></div>
+                      <div className="skeleton-text" style={{ width: '120px', height: '1rem', flexShrink: 0 }}></div>
+                      <div className="skeleton-text" style={{ width: '120px', height: '1rem', flexShrink: 0 }}></div>
+                      <div className="skeleton-text" style={{ width: '120px', height: '1rem', flexShrink: 0 }}></div>
+                      <div className="skeleton-text" style={{ width: '120px', height: '1rem', flexShrink: 0 }}></div>
+                    </div>
+                    {[1, 2, 3].map(i => (
+                      <div key={i} style={{ display: 'flex', gap: '1.5rem', alignItems: 'center', padding: '0.5rem 0', overflow: 'hidden' }}>
+                        <div className="skeleton-text" style={{ width: '100px', height: '1.5rem', flexShrink: 0 }}></div>
+                        <div className="skeleton-text" style={{ flex: 1, height: '2.5rem', borderRadius: '6px', minWidth: '120px' }}></div>
+                        <div className="skeleton-text" style={{ width: '80px', height: '1.5rem', flexShrink: 0 }}></div>
                       </div>
-                    ) : (
-                      Object.entries(groupedEvents).map(([dateStr, events]) => (
-                        <div key={dateStr} className="timeline-group">
-                          <h3 className="timeline-date-header">{dateStr}</h3>
-                          {events.map((e, index) => (
-                            <div key={index} className={`timeline-event-card ${e.isCancelled ? 'cancelled' : ''}`}>
-                              <div className="timeline-event-time">{e.timeSlot}</div>
-                              <div className="timeline-event-info">
-                                <span className="timeline-event-title">{e.summary}</span>
-                                <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                                  Room: {e.location}
-                                </span>
-                              </div>
-                              <span className={`timeline-event-room ${e.isCancelled ? 'cancelled' : ''}`}>
-                                {e.isCancelled ? 'CANCELLED' : `Room ${e.room}`}
-                              </span>
-                            </div>
-                          ))}
-                        </div>
-                      ))
-                    )}
+                    ))}
                   </div>
-                </div>
-              ) : (
-                /* Calendar Format View */
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                  {/* Week Navigation Controls */}
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem', padding: '0.25rem 0' }}>
-                    <div className="calendar-nav-buttons">
-                      <button 
-                        className="btn btn-secondary" 
-                        onClick={handlePrevWeek} 
-                        type="button"
-                      >
-                        &larr; Prev Week
-                      </button>
-                      <button 
-                        className="btn btn-secondary" 
-                        onClick={handleJumpToCurrentWeek} 
-                        type="button"
-                        style={{ fontWeight: 700 }}
-                      >
-                        Current Week
-                      </button>
-                      <button 
-                        className="btn btn-secondary" 
-                        onClick={handleNextWeek} 
-                        type="button"
-                      >
-                        Next Week &rarr;
-                      </button>
+                </section>
+              )}
+
+              {/* Timetable Preview & Actions Section */}
+              {generatedEvents && (
+                <section className="glass-card" style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem', borderBottom: '1px solid var(--card-border)', paddingBottom: '1rem' }}>
+                    <div>
+                      <h2 style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--text-primary)' }}>
+                        Generated Timetable Preview
+                      </h2>
+                      <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginTop: '0.1rem' }}>
+                        Found {generatedEvents.length} class slots in the database
+                      </p>
                     </div>
-                    <div style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--text-primary)' }}>
-                      {activeWeekDays[0].date.toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' })}
-                      {' - '}
-                      {activeWeekDays[6].date.toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' })}
+                    
+                    <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', flexWrap: 'wrap' }}>
+                      {/* Sync Calendar Button */}
+                      <button
+                        className="btn btn-primary"
+                        onClick={() => setIsExportModalOpen(true)}
+                        type="button"
+                        style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', padding: '0.5rem 1rem', fontSize: '0.85rem' }}
+                      >
+                        <RefreshCw size={14} /> Sync Calendar
+                      </button>
+
+                      {/* Preview Tab Control */}
+                      <div className="preview-tabs" style={{ marginBottom: 0 }}>
+                        <button 
+                          className={`preview-tab-btn ${previewTab === 'list' ? 'active' : ''}`}
+                          onClick={() => setPreviewTab('list')}
+                          type="button"
+                          style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}
+                        >
+                          <List size={15} /> List View
+                        </button>
+                        <button 
+                          className={`preview-tab-btn ${previewTab === 'calendar' ? 'active' : ''}`}
+                          onClick={() => setPreviewTab('calendar')}
+                          type="button"
+                          style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}
+                        >
+                          <Grid size={15} /> Calendar format
+                        </button>
+                      </div>
                     </div>
                   </div>
 
-                  <div className="calendar-wrapper" ref={calendarWrapperRef}>
-                    <div className="calendar-grid" style={{ gridTemplateColumns: '100px repeat(7, minmax(130px, 1fr))', minWidth: '950px' }}>
-                      {/* Headers */}
-                      <div className="calendar-header-cell">Time Slot</div>
-                      {activeWeekDays.map(dayInfo => {
-                        const isToday = dayInfo.date.toDateString() === new Date().toDateString();
-                        return (
-                          <div 
-                            key={dayInfo.dateStr} 
-                            className={`calendar-header-cell ${isToday ? 'today-highlight' : ''}`}
-                            style={{ display: 'flex', flexDirection: 'column', gap: '2px', justifyContent: 'center', alignItems: 'center' }}
-                          >
-                            <span style={{ fontWeight: 700 }}>{dayInfo.dayName}</span>
-                            <span style={{ fontSize: '0.75rem', color: isToday ? 'var(--accent-color)' : 'var(--text-muted)' }}>
-                              {dayInfo.formatted}
-                            </span>
-                            {isToday && <span className="today-badge">Today</span>}
+                  {/* List / Calendar View Rendering */}
+                  {generatedEvents.length === 0 ? (
+                    <div style={{ padding: '3rem 1rem', textAlign: 'center', background: 'rgba(0,0,0,0.01)', borderRadius: '12px' }}>
+                      <p style={{ fontWeight: 600, color: 'var(--text-secondary)' }}>No classes scheduled</p>
+                      <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginTop: '0.25rem' }}>
+                        There are no scheduled lectures in Term IV for the selected courses in the Google Sheet database.
+                      </p>
+                    </div>
+                  ) : previewTab === 'list' ? (
+                    /* List View */
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                      {/* List Filter Tabs */}
+                      <div className="list-filter-tabs">
+                        <button 
+                          className={`list-filter-btn ${listFilter === 'today' ? 'active' : ''}`}
+                          onClick={() => setListFilter('today')}
+                          type="button"
+                        >
+                          Today
+                        </button>
+                        <button 
+                          className={`list-filter-btn ${listFilter === 'week' ? 'active' : ''}`}
+                          onClick={() => setListFilter('week')}
+                          type="button"
+                        >
+                          This Week
+                        </button>
+                        <button 
+                          className={`list-filter-btn ${listFilter === 'full' ? 'active' : ''}`}
+                          onClick={() => setListFilter('full')}
+                          type="button"
+                        >
+                          Full Term
+                        </button>
+                      </div>
+
+                      <div className="timeline-list">
+                        {Object.keys(groupedEvents).length === 0 ? (
+                          <div style={{ padding: '2rem 1rem', textAlign: 'center', background: 'rgba(0,0,0,0.01)', borderRadius: '12px' }}>
+                            <p style={{ fontWeight: 600, color: 'var(--text-secondary)' }}>No classes scheduled for this view</p>
                           </div>
-                        );
-                      })}
+                        ) : (
+                          Object.entries(groupedEvents).map(([dateStr, events]) => (
+                            <div key={dateStr} className="timeline-group">
+                              <h3 className="timeline-date-header">{dateStr}</h3>
+                              {events.map((e, index) => (
+                                <div key={index} className={`timeline-event-card ${e.isCancelled ? 'cancelled' : ''}`}>
+                                  <div className="timeline-event-time">{e.timeSlot}</div>
+                                  <div className="timeline-event-info">
+                                    <span className="timeline-event-title">{e.summary}</span>
+                                    <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                                      Room: {e.location}
+                                    </span>
+                                  </div>
+                                  <span className={`timeline-event-room ${e.isCancelled ? 'cancelled' : ''}`}>
+                                    {e.isCancelled ? 'CANCELLED' : `Room ${e.room}`}
+                                  </span>
+                                </div>
+                              ))}
+                            </div>
+                          ))
+                        )}
+                      </div>
+                    </div>
+                  ) : (
+                    /* Calendar Format View */
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                      {/* Week Navigation Controls */}
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem', padding: '0.25rem 0' }}>
+                        <div className="calendar-nav-buttons">
+                          <button 
+                            className="btn btn-secondary" 
+                            onClick={handlePrevWeek} 
+                            type="button"
+                          >
+                            &larr; Prev Week
+                          </button>
+                          <button 
+                            className="btn btn-secondary" 
+                            onClick={handleJumpToCurrentWeek} 
+                            type="button"
+                            style={{ fontWeight: 700 }}
+                          >
+                            Current Week
+                          </button>
+                          <button 
+                            className="btn btn-secondary" 
+                            onClick={handleNextWeek} 
+                            type="button"
+                          >
+                            Next Week &rarr;
+                          </button>
+                        </div>
+                        <div style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--text-primary)' }}>
+                          {activeWeekDays[0].date.toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' })}
+                          {' - '}
+                          {activeWeekDays[6].date.toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' })}
+                        </div>
+                      </div>
 
-                      {/* Grid Rows */}
-                      {timeSlots.map(slot => (
-                        <div key={slot} style={{ display: 'contents' }}>
-                          {/* Time Slot Column */}
-                          <div className="calendar-time-cell">{slot}</div>
-                          
-                          {/* Days columns */}
+                      <div className="calendar-wrapper" ref={calendarWrapperRef}>
+                        <div className="calendar-grid" style={{ gridTemplateColumns: '100px repeat(7, minmax(130px, 1fr))', minWidth: '950px' }}>
+                          {/* Headers */}
+                          <div className="calendar-header-cell">Time Slot</div>
                           {activeWeekDays.map(dayInfo => {
-                            const isToday = dayInfo.date.toDateString() === new Date().toDateString();
-                            const cellEvents = generatedEvents.filter(e => {
-                              const eDate = new Date(e.dateStr);
-                              return !isNaN(eDate.getTime()) && eDate.toDateString() === dayInfo.dateStr && e.timeSlot === slot;
-                            });
-
+                            const isToday = dayInfo.date.toDateString() === getIstNow().toDateString();
                             return (
                               <div 
                                 key={dayInfo.dateStr} 
-                                className={`calendar-slot-cell ${isToday ? 'today-column' : ''}`}
+                                className={`calendar-header-cell ${isToday ? 'today-highlight' : ''}`}
+                                style={{ display: 'flex', flexDirection: 'column', gap: '2px', justifyContent: 'center', alignItems: 'center' }}
                               >
-                                {cellEvents.map((e, index) => (
-                                  <div key={index} className={`calendar-event-pill ${e.isCancelled ? 'cancelled' : ''}`} title={e.summary}>
-                                    <span className="calendar-event-abbr">
-                                      {e.abbr}{e.section ? `-${e.section}` : ''}
-                                    </span>
-                                    <span className="calendar-event-room-label">
-                                      {e.isCancelled ? 'CANCELLED' : `Room ${e.room}`}
-                                    </span>
+                                <span style={{ fontWeight: 700 }}>{dayInfo.dayName}</span>
+                                <span style={{ fontSize: '0.75rem', color: isToday ? 'var(--accent-color)' : 'var(--text-muted)' }}>
+                                  {dayInfo.formatted}
+                                </span>
+                                {isToday && <span className="today-badge">Today</span>}
+                              </div>
+                            );
+                          })}
+
+                          {/* Grid Rows */}
+                          {timeSlots.map(slot => (
+                            <div key={slot} style={{ display: 'contents' }}>
+                              {/* Time Slot Column */}
+                              <div className="calendar-time-cell">{slot}</div>
+                              
+                              {/* Days columns */}
+                              {activeWeekDays.map(dayInfo => {
+                                const isToday = dayInfo.date.toDateString() === getIstNow().toDateString();
+                                const cellEvents = generatedEvents.filter(e => {
+                                  const eDate = new Date(e.dateStr);
+                                  return !isNaN(eDate.getTime()) && eDate.toDateString() === dayInfo.dateStr && e.timeSlot === slot;
+                                });
+
+                                return (
+                                  <div 
+                                    key={dayInfo.dateStr} 
+                                    className={`calendar-slot-cell ${isToday ? 'today-column' : ''}`}
+                                  >
+                                    {cellEvents.map((e, index) => (
+                                      <div key={index} className={`calendar-event-pill ${e.isCancelled ? 'cancelled' : ''}`} title={e.summary}>
+                                        <span className="calendar-event-abbr">
+                                          {e.abbr}{e.section ? `-${e.section}` : ''}
+                                        </span>
+                                        <span className="calendar-event-room-label">
+                                          {e.isCancelled ? 'CANCELLED' : `Room ${e.room}`}
+                                        </span>
+                                      </div>
+                                    ))}
                                   </div>
-                                ))}
+                                );
+                              })}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </section>
+              )}
+
+              {/* Main Selection Layout */}
+              {!error && (
+                <div className="main-layout">
+                  
+                  {/* Left Column: Course Selector Card */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+                    
+                    {/* PDF Document Upload Area */}
+                    <section className="glass-card" style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                      <h2 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--text-primary)' }}>
+                        Auto-Select via PDF Import
+                      </h2>
+                      
+                      <input 
+                        type="file" 
+                        ref={fileInputRef} 
+                        onChange={handlePdfUpload} 
+                        accept="application/pdf" 
+                        style={{ display: 'none' }}
+                      />
+
+                      <div 
+                        className="pdf-dropzone" 
+                        onClick={() => fileInputRef.current?.click()}
+                        style={{ opacity: parsingPdf ? 0.7 : 1, pointerEvents: parsingPdf ? 'none' : 'auto' }}
+                        role="button"
+                        tabIndex={0}
+                        aria-label="Upload EDTEX Confirmed Courses PDF to auto-select courses"
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault();
+                            fileInputRef.current?.click();
+                          }
+                        }}
+                      >
+                        {parsingPdf ? (
+                          <>
+                            <RefreshCw size={36} className="pdf-dropzone-icon spin" />
+                            <span className="pdf-dropzone-text">Parsing Selection PDF...</span>
+                            <span className="pdf-dropzone-subtext">Mapping courses and sections...</span>
+                          </>
+                        ) : (
+                          <>
+                            <UploadCloud size={36} className="pdf-dropzone-icon" />
+                            <span className="pdf-dropzone-text">Click to upload your EDTEX Confirmed Courses PDF</span>
+                            <span className="pdf-dropzone-subtext">Auto-selects PGP courses and appropriate sections</span>
+                          </>
+                        )}
+                      </div>
+                    </section>
+
+                    {/* Grid Selector */}
+                    <section className="glass-card courses-container">
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
+                        <div>
+                          <h2 style={{ fontSize: '1.15rem', fontWeight: 700, color: 'var(--text-primary)' }}>Course Selection</h2>
+                          <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '0.1rem' }}>
+                            Click cards to select, and use section bubbles to assign specific sections.
+                          </p>
+                        </div>
+                        <div style={{ display: 'flex', gap: '0.5rem' }}>
+                          <button className="btn btn-secondary" style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem' }} onClick={handleSelectAll}>
+                            Select All
+                          </button>
+                          <button className="btn btn-secondary" style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem' }} onClick={handleClearSelection}>
+                            Clear
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Search input with Clear Cross Button */}
+                      <div className="search-filter-row">
+                        <div className="search-input-wrapper">
+                          <Search size={16} className="search-icon" />
+                          <input
+                            type="text"
+                            placeholder="Search by name or abbreviation (e.g., GT, Investment)..."
+                            className="search-input"
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                          />
+                          {searchQuery && (
+                            <button 
+                              className="search-clear-btn" 
+                              onClick={() => setSearchQuery('')}
+                              title="Clear search"
+                              type="button"
+                              aria-label="Clear search query"
+                            >
+                              <X size={15} />
+                            </button>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Course Grid */}
+                      {loading ? (
+                        <div className="courses-grid" style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem', minHeight: '200px' }}>
+                          <div className="skeleton-row">
+                            <div className="skeleton-text" style={{ width: '40%' }}></div>
+                            <div className="skeleton-text" style={{ width: '85%' }}></div>
+                          </div>
+                        </div>
+                      ) : filteredCourses.length === 0 ? (
+                        <div className="courses-grid" style={{ padding: '3rem 1.5rem', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', minHeight: '200px', textAlign: 'center' }}>
+                          <p style={{ fontWeight: 600, color: 'var(--text-secondary)' }}>No courses match your query</p>
+                        </div>
+                      ) : (
+                        <div className="courses-grid">
+                          {filteredCourses.map((course) => {
+                            const selectedSection = selectedCourses[course.abbr];
+                            const isSelected = selectedSection !== undefined;
+                            const hasSections = course.sections && course.sections.length > 0;
+
+                            return (
+                              <div 
+                                key={course.abbr} 
+                                className={`course-card ${isSelected ? 'selected' : ''}`}
+                                onClick={() => toggleCourse(course.abbr)}
+                                role="button"
+                                tabIndex={0}
+                                aria-pressed={isSelected}
+                                onKeyDown={(e) => {
+                                  if (e.key === 'Enter' || e.key === ' ') {
+                                    e.preventDefault();
+                                    toggleCourse(course.abbr);
+                                  }
+                                }}
+                                aria-label={`${course.name} (${course.abbr}). ${isSelected ? 'Selected' : 'Not selected'}. ${course.sections && course.sections.length > 0 ? `Sections available: ${course.sections.join(', ')}` : ''}`}
+                              >
+                                <input 
+                                  type="checkbox" 
+                                  className="course-checkbox"
+                                  checked={isSelected}
+                                  readOnly
+                                  tabIndex={-1}
+                                  aria-hidden="true"
+                                />
+                                <div className="course-info" style={{ width: '100%' }}>
+                                  <span className="course-abbr">{course.abbr}</span>
+                                  <span className="course-name">{course.name}</span>
+                                  
+                                  {/* Section selector on course card */}
+                                  {isSelected && (
+                                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', width: '100%', alignItems: 'center', marginTop: '0.5rem' }}>
+                                      {/* Section Selector */}
+                                      {hasSections ? (
+                                        <div className="section-selector-container" style={{ margin: 0, flex: 1 }}>
+                                          {course.sections?.map(sec => (
+                                            <button
+                                              key={sec}
+                                              className={`section-selector-bubble ${selectedSection === sec ? 'active' : ''}`}
+                                              onClick={(e) => changeCourseSection(course.abbr, sec, e)}
+                                              type="button"
+                                              title={`Select Section ${sec}`}
+                                            >
+                                              {sec}
+                                            </button>
+                                          ))}
+                                        </div>
+                                      ) : (
+                                        <div style={{ flex: 1 }} />
+                                      )}
+                                      {/* View Schedule Button */}
+                                      <button
+                                        className="btn btn-secondary"
+                                        style={{ 
+                                          fontSize: '0.7rem', 
+                                          padding: '0.25rem 0.5rem', 
+                                          borderRadius: '4px',
+                                          display: 'flex', 
+                                          alignItems: 'center', 
+                                          gap: '0.25rem',
+                                          marginLeft: 'auto'
+                                        }}
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          handleViewCourseSchedule(course.abbr, selectedSection);
+                                        }}
+                                        type="button"
+                                        title={`View schedule for ${course.abbr}`}
+                                      >
+                                        <FileText size={12} /> Schedule
+                                      </button>
+                                    </div>
+                                  )}
+                                </div>
                               </div>
                             );
                           })}
                         </div>
-                      ))}
-                    </div>
+                      )}
+                    </section>
                   </div>
+
+                  {/* Right Column: Sidebar */}
+                  <aside className="sidebar-container">
+                    <div className="sidebar-sticky">
+                      {/* Selected Courses Tags Card */}
+                      <div className="glass-card" style={{ padding: '1.5rem' }}>
+                        <h3 style={{ fontSize: '1rem', fontWeight: 700, marginBottom: '1rem', color: 'var(--text-primary)' }}>
+                          Selected Courses ({selectedCoursesInfo.length})
+                        </h3>
+                        
+                        {selectedCoursesInfo.length === 0 ? (
+                          <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', fontStyle: 'italic', textAlign: 'center', padding: '1.5rem 0' }}>
+                            No courses selected. Upload your PDF or select manually to begin.
+                          </p>
+                        ) : (
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem', maxHeight: '250px', overflowY: 'auto', paddingRight: '4px' }}>
+                            {selectedCoursesInfo.map(c => (
+                              <div className="selected-course-tag" key={c.abbr}>
+                                <div className="selected-course-info">
+                                  <span className="selected-course-tag-abbr">
+                                    {c.abbr}{c.section ? ` - Sec ${c.section}` : ''}
+                                  </span>
+                                  <span className="selected-course-tag-name" title={c.name}>{c.name}</span>
+                                </div>
+                                <div style={{ display: 'flex', gap: '0.35rem', alignItems: 'center' }}>
+                                  <button
+                                    className="btn btn-secondary"
+                                    style={{ padding: '0.25rem', borderRadius: '4px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                                    onClick={() => handleViewCourseSchedule(c.abbr, c.section)}
+                                    title={`View Schedule for ${c.abbr}`}
+                                    type="button"
+                                  >
+                                    <FileText size={13} />
+                                  </button>
+                                  <button 
+                                    className="selected-course-remove-btn" 
+                                    onClick={() => toggleCourse(c.abbr)}
+                                    title={`Deselect ${c.abbr}`}
+                                    type="button"
+                                  >
+                                    <X size={12} />
+                                  </button>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Prompt to Generate Timetable */}
+                      {selectedCoursesInfo.length > 0 && !generatedEvents && (
+                        <div className="prompt-card">
+                          <h3 style={{ fontSize: '0.95rem', fontWeight: 700, color: 'var(--text-primary)' }}>
+                            Ready to Build Timetable?
+                          </h3>
+                          <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', margin: '0.2rem 0 0.5rem 0' }}>
+                            Compile the schedules for your selected course sections.
+                          </p>
+                          <button 
+                            className="btn btn-primary" 
+                            style={{ width: '100%' }}
+                            onClick={handleGenerateTimetable}
+                            disabled={generating}
+                            type="button"
+                          >
+                            {generating ? (
+                              <>
+                                <RefreshCw size={14} className="spin" /> Building...
+                              </>
+                            ) : (
+                              'Generate Timetable'
+                            )}
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  </aside>
+
                 </div>
               )}
-            </section>
-          )}
+            </main>
+          </>
+        )}
 
-          {/* Main Selection Layout */}
-          {!error && (
-            <div className="main-layout">
+        {/* Bus Schedule Tab Content */}
+        {currentTab === 'bus' && (
+          <main id="main-content" style={{ display: 'flex', flexDirection: 'column', gap: '2.5rem' }}>
+            <div className="bus-schedule-container" style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
               
-              {/* Left Column: Course Selector Card */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+              {/* Real-time Cards */}
+              <div className="bus-realtime-grid">
                 
-                {/* PDF Document Upload Area */}
-                <section className="glass-card" style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                  <h2 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--text-primary)' }}>
-                    Auto-Select via PDF Import
-                  </h2>
-                  
-                  <input 
-                    type="file" 
-                    ref={fileInputRef} 
-                    onChange={handlePdfUpload} 
-                    accept="application/pdf" 
-                    style={{ display: 'none' }}
-                  />
-
-                  <div 
-                    className="pdf-dropzone" 
-                    onClick={() => fileInputRef.current?.click()}
-                    style={{ opacity: parsingPdf ? 0.7 : 1, pointerEvents: parsingPdf ? 'none' : 'auto' }}
-                    role="button"
-                    tabIndex={0}
-                    aria-label="Upload EDTEX Confirmed Courses PDF to auto-select courses"
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter' || e.key === ' ') {
-                        e.preventDefault();
-                        fileInputRef.current?.click();
-                      }
-                    }}
-                  >
-                    {parsingPdf ? (
-                      <>
-                        <RefreshCw size={36} className="pdf-dropzone-icon spin" />
-                        <span className="pdf-dropzone-text">Parsing Selection PDF...</span>
-                        <span className="pdf-dropzone-subtext">Mapping courses and sections...</span>
-                      </>
-                    ) : (
-                      <>
-                        <UploadCloud size={36} className="pdf-dropzone-icon" />
-                        <span className="pdf-dropzone-text">Click to upload your EDTEX Confirmed Courses PDF</span>
-                        <span className="pdf-dropzone-subtext">Auto-selects PGP courses and appropriate sections</span>
-                      </>
-                    )}
+                {/* Next Bus */}
+                <div className="glass-card bus-realtime-card next-bus-card" style={{ padding: '1.5rem' }}>
+                  <div className="bus-card-header">
+                    <Clock className="bus-header-icon" size={18} />
+                    <h3>NEXT BUS</h3>
                   </div>
-                </section>
-
-              {/* Grid Selector */}
-              <section className="glass-card courses-container">
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
-                  <div>
-                    <h2 style={{ fontSize: '1.15rem', fontWeight: 700, color: 'var(--text-primary)' }}>Course Selection</h2>
-                    <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '0.1rem' }}>
-                      Click cards to select, and use section bubbles to assign specific sections.
-                    </p>
-                  </div>
-                  <div style={{ display: 'flex', gap: '0.5rem' }}>
-                    <button className="btn btn-secondary" style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem' }} onClick={handleSelectAll}>
-                      Select All
-                    </button>
-                    <button className="btn btn-secondary" style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem' }} onClick={handleClearSelection}>
-                      Clear
-                    </button>
-                  </div>
+                  {busCalculations.nextBus ? (
+                    <div className="bus-card-body">
+                      <div className="bus-time-display">{busCalculations.nextBus.time}</div>
+                      <div className="bus-route-display">
+                        <span className="bus-route-from">{busCalculations.nextBus.from}</span>
+                        <ChevronRight size={14} style={{ color: 'var(--text-muted)' }} />
+                        <span className="bus-route-to">{busCalculations.nextBus.to}</span>
+                      </div>
+                      <div className="bus-via-display">Via: {busCalculations.nextBus.via || 'Direct'}</div>
+                      {busCalculations.nextBus.tripsExtendedToMainGate && (
+                        <div className="bus-badge">Extends to {busCalculations.nextBus.tripsExtendedToMainGate}</div>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="bus-card-empty">
+                      <AlertTriangle size={32} style={{ color: 'var(--accent-color)' }} />
+                      <p style={{ fontWeight: 600 }}>No more buses scheduled for today.</p>
+                    </div>
+                  )}
                 </div>
 
-                {/* Search input with Clear Cross Button */}
-                <div className="search-filter-row">
-                  <div className="search-input-wrapper">
+                {/* Upcoming Buses */}
+                <div className="glass-card bus-realtime-card upcoming-buses-card" style={{ padding: '1.5rem' }}>
+                  <div className="bus-card-header">
+                    <List className="bus-header-icon" size={18} />
+                    <h3>UPCOMING BUSES (NEXT 3 HOURS)</h3>
+                  </div>
+                  <div className="bus-card-body" style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+                    {busCalculations.upcomingBuses.length > 0 ? (
+                      <div className="upcoming-buses-list">
+                        {busCalculations.upcomingBuses.map((bus) => (
+                          <div key={bus.slNo} className="upcoming-bus-item">
+                            <span className="upcoming-bus-time">{bus.time}</span>
+                            <div className="upcoming-bus-route">
+                              <span style={{ fontWeight: 700 }}>{bus.from} &rarr; {bus.to}</span>
+                              <span className="upcoming-bus-via">Via: {bus.via || 'Direct'}</span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="bus-card-empty">
+                        <p>{busCalculations.nextBus ? 'No additional buses in the next 3 hours.' : 'No upcoming buses for today.'}</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Time Sync and Refresh */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem', borderBottom: '1px solid var(--card-border)', paddingBottom: '1rem' }}>
+                <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
+                  Times display in Indian Standard Time (IST). Last Updated: {busRefreshTime ? busRefreshTime.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' }) : '-'}
+                </div>
+                <button 
+                  className="btn btn-secondary" 
+                  onClick={() => setBusRefreshTime(getIstNow())}
+                  type="button"
+                  style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.4rem 0.8rem', fontSize: '0.8rem' }}
+                >
+                  <RefreshCw size={14} /> Refresh Time
+                </button>
+              </div>
+
+              {/* Full Schedule list */}
+              <div className="glass-card" style={{ padding: '1.5rem' }}>
+                <div style={{ borderBottom: '1px solid var(--card-border)', paddingBottom: '1rem', marginBottom: '1.5rem' }}>
+                  <h2 style={{ fontSize: '1.2rem', fontWeight: 800, color: 'var(--text-primary)' }}>Full Bus Schedule</h2>
+                  <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginTop: '0.1rem' }}>
+                    Complete list of all shuttle routes operating between housing and campuses.
+                  </p>
+                </div>
+
+                {/* Search query input */}
+                <div className="search-filter-row" style={{ marginBottom: '1.5rem' }}>
+                  <div className="search-input-wrapper" style={{ maxWidth: '400px' }}>
                     <Search size={16} className="search-icon" />
                     <input
+                      id="bus-search"
                       type="text"
-                      placeholder="Search by name or abbreviation (e.g., GT, Investment)..."
+                      placeholder="Search routes by from, to, or via..."
                       className="search-input"
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
+                      value={busSearchQuery}
+                      onChange={(e) => setBusSearchQuery(e.target.value)}
                     />
-                    {searchQuery && (
+                    {busSearchQuery && (
                       <button 
                         className="search-clear-btn" 
-                        onClick={() => setSearchQuery('')}
+                        onClick={() => setBusSearchQuery('')}
                         title="Clear search"
                         type="button"
-                        aria-label="Clear search query"
                       >
                         <X size={15} />
                       </button>
@@ -1212,186 +1765,253 @@ export default function Home() {
                   </div>
                 </div>
 
-                {/* Course Grid */}
-                {loading ? (
-                  <div className="courses-grid" style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem', minHeight: '200px' }}>
-                    <div className="skeleton-row">
-                      <div className="skeleton-text" style={{ width: '40%' }}></div>
-                      <div className="skeleton-text" style={{ width: '85%' }}></div>
-                    </div>
-                  </div>
-                ) : filteredCourses.length === 0 ? (
-                  <div className="courses-grid" style={{ padding: '3rem 1.5rem', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', minHeight: '200px', textAlign: 'center' }}>
-                    <p style={{ fontWeight: 600, color: 'var(--text-secondary)' }}>No courses match your query</p>
-                  </div>
-                ) : (
-                  <div className="courses-grid">
-                    {filteredCourses.map((course) => {
-                      const selectedSection = selectedCourses[course.abbr];
-                      const isSelected = selectedSection !== undefined;
-                      const hasSections = course.sections && course.sections.length > 0;
-
-                      return (
-                        <div 
-                          key={course.abbr} 
-                          className={`course-card ${isSelected ? 'selected' : ''}`}
-                          onClick={() => toggleCourse(course.abbr)}
-                          role="button"
-                          tabIndex={0}
-                          aria-pressed={isSelected}
-                          onKeyDown={(e) => {
-                            if (e.key === 'Enter' || e.key === ' ') {
-                              e.preventDefault();
-                              toggleCourse(course.abbr);
-                            }
-                          }}
-                          aria-label={`${course.name} (${course.abbr}). ${isSelected ? 'Selected' : 'Not selected'}. ${course.sections && course.sections.length > 0 ? `Sections available: ${course.sections.join(', ')}` : ''}`}
-                        >
-                          <input 
-                            type="checkbox" 
-                            className="course-checkbox"
-                            checked={isSelected}
-                            readOnly
-                            tabIndex={-1}
-                            aria-hidden="true"
-                          />
-                          <div className="course-info" style={{ width: '100%' }}>
-                            <span className="course-abbr">{course.abbr}</span>
-                            <span className="course-name">{course.name}</span>
+                {/* Desktop and Tablet table */}
+                <div className="bus-table-wrapper">
+                  <table className="bus-table">
+                    <thead>
+                      <tr>
+                        <th className="desktop-only-cell">Time</th>
+                        <th>From</th>
+                        <th>To</th>
+                        <th className="desktop-only-cell">Via</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {filteredBuses.map((bus) => {
+                        const isNext = busCalculations.nextBus && busCalculations.nextBus.slNo === bus.slNo;
+                        return (
+                          <tr key={bus.slNo} className={isNext ? 'next-bus-highlight-row' : ''}>
+                            {/* Time Column (Desktop Only) */}
+                            <td className="desktop-only-cell" style={{ fontWeight: 700 }}>
+                              {bus.time}
+                              {isNext && <span className="next-bus-tag">NEXT</span>}
+                            </td>
                             
-                            {/* Section selector on course card */}
-                            {isSelected && (
-                              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', width: '100%', alignItems: 'center', marginTop: '0.5rem' }}>
-                                {/* Section Selector */}
-                                {hasSections ? (
-                                  <div className="section-selector-container" style={{ margin: 0, flex: 1 }}>
-                                    {course.sections?.map(sec => (
-                                      <button
-                                        key={sec}
-                                        className={`section-selector-bubble ${selectedSection === sec ? 'active' : ''}`}
-                                        onClick={(e) => changeCourseSection(course.abbr, sec, e)}
-                                        type="button"
-                                        title={`Select Section ${sec}`}
-                                      >
-                                        {sec}
-                                      </button>
-                                    ))}
-                                  </div>
-                                ) : (
-                                  <div style={{ flex: 1 }} />
-                                )}
-                                {/* View Schedule Button */}
-                                <button
-                                  className="btn btn-secondary"
-                                  style={{ 
-                                    fontSize: '0.7rem', 
-                                    padding: '0.25rem 0.5rem', 
-                                    borderRadius: '4px',
-                                    display: 'flex', 
-                                    alignItems: 'center', 
-                                    gap: '0.25rem',
-                                    marginLeft: 'auto'
-                                  }}
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleViewCourseSchedule(course.abbr, selectedSection);
-                                  }}
-                                  type="button"
-                                  title={`View schedule for ${course.abbr}`}
-                                >
-                                  <FileText size={12} /> Schedule
-                                </button>
+                            {/* From Column (All viewports) */}
+                            <td>
+                              <div className="mobile-time-badge-wrapper">
+                                <span className="mobile-time-text">{bus.time}</span>
+                                {isNext && <span className="next-bus-tag">NEXT</span>}
                               </div>
-                            )}
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
-              </section>
-            </div>
+                              <span className="from-text">{bus.from}</span>
+                            </td>
+                            
+                            {/* To Column (All viewports) */}
+                            <td>
+                              <span className="to-text">{bus.to}</span>
+                              {bus.via && (
+                                <span className="mobile-via-subtext">
+                                  via {bus.via}
+                                </span>
+                              )}
+                            </td>
+                            
+                            {/* Via Column (Desktop Only) */}
+                            <td className="desktop-only-cell">{bus.via || '-'}</td>
+                          </tr>
+                        );
+                      })}
+                      {filteredBuses.length === 0 && (
+                        <tr>
+                          <td colSpan={4} style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-muted)' }}>
+                            No buses found matching &quot;{busSearchQuery}&quot;
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
 
-            {/* Right Column: Sidebar */}
-            <aside className="sidebar-container">
-              <div className="sidebar-sticky">
-                {/* Selected Courses Tags Card */}
-                <div className="glass-card" style={{ padding: '1.5rem' }}>
-                  <h3 style={{ fontSize: '1rem', fontWeight: 700, marginBottom: '1rem', color: 'var(--text-primary)' }}>
-                    Selected Courses ({selectedCoursesInfo.length})
-                  </h3>
-                  
-                  {selectedCoursesInfo.length === 0 ? (
-                    <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', fontStyle: 'italic', textAlign: 'center', padding: '1.5rem 0' }}>
-                      No courses selected. Upload your PDF or select manually to begin.
-                    </p>
-                  ) : (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem', maxHeight: '250px', overflowY: 'auto', paddingRight: '4px' }}>
-                      {selectedCoursesInfo.map(c => (
-                        <div className="selected-course-tag" key={c.abbr}>
-                          <div className="selected-course-info">
-                            <span className="selected-course-tag-abbr">
-                              {c.abbr}{c.section ? ` - Sec ${c.section}` : ''}
-                            </span>
-                            <span className="selected-course-tag-name" title={c.name}>{c.name}</span>
-                          </div>
-                          <div style={{ display: 'flex', gap: '0.35rem', alignItems: 'center' }}>
-                            <button
-                              className="btn btn-secondary"
-                              style={{ padding: '0.25rem', borderRadius: '4px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                              onClick={() => handleViewCourseSchedule(c.abbr, c.section)}
-                              title={`View Schedule for ${c.abbr}`}
-                              type="button"
-                            >
-                              <FileText size={13} />
-                            </button>
-                            <button 
-                              className="selected-course-remove-btn" 
-                              onClick={() => toggleCourse(c.abbr)}
-                              title={`Deselect ${c.abbr}`}
-                              type="button"
-                            >
-                              <X size={12} />
-                            </button>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
+            </div>
+          </main>
+        )}
+
+        {/* Mess Menu Tab Content */}
+        {currentTab === 'mess' && (
+          <main id="main-content" style={{ display: 'flex', flexDirection: 'column', gap: '2.5rem' }}>
+            <div className="mess-menu-container" style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+              
+              {/* Menu Month & Day Select */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1.5rem', borderBottom: '1px solid var(--card-border)', paddingBottom: '1.5rem' }}>
+                <div>
+                  <h2 style={{ fontSize: '1.4rem', fontWeight: 800, color: 'var(--text-primary)' }}>
+                    Students Mess Menu
+                  </h2>
+                  <p style={{ fontSize: '0.9rem', color: 'var(--text-muted)', marginTop: '0.1rem' }}>
+                    Month: <strong style={{ color: 'var(--text-primary)' }}>{messMenuData?.month || 'June 2026'}</strong>
+                  </p>
                 </div>
 
-                {/* Prompt to Generate Timetable */}
-                {selectedCoursesInfo.length > 0 && !generatedEvents && (
-                  <div className="prompt-card">
-                    <h3 style={{ fontSize: '0.95rem', fontWeight: 700, color: 'var(--text-primary)' }}>
-                      Ready to Build Timetable?
-                    </h3>
-                    <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', margin: '0.2rem 0 0.5rem 0' }}>
-                      Compile the schedules for your selected course sections.
-                    </p>
+                 {/* Dropdown Select Day */}
+                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }} ref={dayDropdownRef}>
+                   <span id="day-select-label" style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--text-secondary)' }}>
+                     Select Day:
+                   </span>
+                   
+                   <div className="custom-dropdown-container">
+                     <button
+                       id="day-select-trigger"
+                       className="custom-dropdown-trigger"
+                       onClick={() => setIsDayDropdownOpen(!isDayDropdownOpen)}
+                       type="button"
+                       aria-haspopup="listbox"
+                       aria-expanded={isDayDropdownOpen}
+                       aria-labelledby="day-select-label day-select-trigger"
+                     >
+                       <span>{messMenuDay ? messMenuDay.charAt(0) + messMenuDay.slice(1).toLowerCase() : 'Select Day'}</span>
+                       <ChevronDown 
+                         size={16} 
+                         className="dropdown-chevron-icon"
+                         style={{ 
+                           transform: isDayDropdownOpen ? 'rotate(180deg)' : 'rotate(0deg)',
+                           transition: 'transform var(--transition-fast)' 
+                         }} 
+                       />
+                     </button>
+                     
+                     {isDayDropdownOpen && (
+                       <div className="custom-dropdown-menu" role="listbox" aria-labelledby="day-select-label">
+                         {['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY'].map((day) => (
+                           <button
+                             key={day}
+                             className={`custom-dropdown-item ${messMenuDay === day ? 'active' : ''}`}
+                             onClick={() => {
+                               setMessMenuDay(day);
+                               setIsDayDropdownOpen(false);
+                             }}
+                             role="option"
+                             aria-selected={messMenuDay === day}
+                             type="button"
+                           >
+                             {day.charAt(0) + day.slice(1).toLowerCase()}
+                           </button>
+                         ))}
+                       </div>
+                     )}
+                   </div>
+                 </div>
+              </div>
+
+              {loadingMessMenu ? (
+                <div style={{ padding: '5rem', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '1rem' }}>
+                  <RefreshCw size={36} className="spin" style={{ color: 'var(--primary-color)' }} />
+                  <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>Loading mess menu from database...</p>
+                </div>
+              ) : messMenuError ? (
+                <div className="glass-card" style={{ borderColor: 'rgba(239, 68, 68, 0.4)', background: 'rgba(239, 68, 68, 0.05)', textAlign: 'center', padding: '3rem 1.5rem' }}>
+                  <h3 style={{ color: '#ef4444', marginBottom: '0.5rem' }}>Unable to retrieve mess menu</h3>
+                  <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>{messMenuError}</p>
+                </div>
+              ) : !activeDayMenu ? (
+                <div style={{ padding: '3rem', textAlign: 'center' }}>
+                  <p style={{ color: 'var(--text-secondary)' }}>No menu data available for the selected day.</p>
+                </div>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+                  
+                  {/* Quick navigation anchor links */}
+                  <div className="mess-quick-nav">
+                    <span style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-muted)', marginRight: '0.25rem' }}>JUMP TO:</span>
                     <button 
-                      className="btn btn-primary" 
-                      style={{ width: '100%' }}
-                      onClick={handleGenerateTimetable}
-                      disabled={generating}
+                      onClick={() => document.getElementById('breakfast')?.scrollIntoView({ behavior: 'smooth' })} 
+                      className="btn btn-secondary quick-nav-btn"
                       type="button"
                     >
-                      {generating ? (
-                        <>
-                          <RefreshCw size={14} className="spin" /> Building...
-                        </>
-                      ) : (
-                        'Generate Timetable'
-                      )}
+                      Breakfast
+                    </button>
+                    <button 
+                      onClick={() => document.getElementById('lunch')?.scrollIntoView({ behavior: 'smooth' })} 
+                      className="btn btn-secondary quick-nav-btn"
+                      type="button"
+                    >
+                      Lunch
+                    </button>
+                    <button 
+                      onClick={() => document.getElementById('dinner')?.scrollIntoView({ behavior: 'smooth' })} 
+                      className="btn btn-secondary quick-nav-btn"
+                      type="button"
+                    >
+                      Dinner
                     </button>
                   </div>
-                )}
-              </div>
-            </aside>
 
-          </div>
+                  {/* Meal Sections Grid */}
+                  <div className="meal-sections-grid">
+                    
+                    {/* Breakfast Card */}
+                    <section id="breakfast" className="glass-card meal-card">
+                      <div className="meal-card-header breakfast-header">
+                        <h3>Breakfast Menu</h3>
+                        <span className="meal-badge">Morning</span>
+                      </div>
+                      <div className="meal-items-list">
+                        {activeDayMenu.breakfast.map((item: any, idx: number) => (
+                          <div key={idx} className={`meal-item-row ${item.isNonVeg ? 'non-veg-item' : 'veg-item'}`}>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.15rem' }}>
+                              <span className="meal-item-category">{item.category}</span>
+                              <span className="meal-item-name">{item.name}</span>
+                            </div>
+                            <span className={`veg-badge ${item.isNonVeg ? 'non-veg' : 'veg'}`} aria-label={item.isNonVeg ? 'Non-vegetarian item' : 'Vegetarian item'}>
+                              <span className="dot"></span>
+                              {item.isNonVeg ? 'Non-Veg' : 'Veg'}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </section>
+
+                    {/* Lunch Card */}
+                    <section id="lunch" className="glass-card meal-card">
+                      <div className="meal-card-header lunch-header">
+                        <h3>Lunch Menu</h3>
+                        <span className="meal-badge">Noon</span>
+                      </div>
+                      <div className="meal-items-list">
+                        {activeDayMenu.lunch.map((item: any, idx: number) => (
+                          <div key={idx} className={`meal-item-row ${item.isNonVeg ? 'non-veg-item' : 'veg-item'}`}>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.15rem' }}>
+                              <span className="meal-item-category">{item.category}</span>
+                              <span className="meal-item-name">{item.name}</span>
+                            </div>
+                            <span className={`veg-badge ${item.isNonVeg ? 'non-veg' : 'veg'}`} aria-label={item.isNonVeg ? 'Non-vegetarian item' : 'Vegetarian item'}>
+                              <span className="dot"></span>
+                              {item.isNonVeg ? 'Non-Veg' : 'Veg'}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </section>
+
+                    {/* Dinner Card */}
+                    <section id="dinner" className="glass-card meal-card">
+                      <div className="meal-card-header dinner-header">
+                        <h3>Dinner Menu</h3>
+                        <span className="meal-badge">Night</span>
+                      </div>
+                      <div className="meal-items-list">
+                        {activeDayMenu.dinner.map((item: any, idx: number) => (
+                          <div key={idx} className={`meal-item-row ${item.isNonVeg ? 'non-veg-item' : 'veg-item'}`}>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.15rem' }}>
+                              <span className="meal-item-category">{item.category}</span>
+                              <span className="meal-item-name">{item.name}</span>
+                            </div>
+                            <span className={`veg-badge ${item.isNonVeg ? 'non-veg' : 'veg'}`} aria-label={item.isNonVeg ? 'Non-vegetarian item' : 'Vegetarian item'}>
+                              <span className="dot"></span>
+                              {item.isNonVeg ? 'Non-Veg' : 'Veg'}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </section>
+
+                  </div>
+
+                </div>
+              )}
+            </div>
+          </main>
         )}
-      </main>
 
         {/* Elegant Footer */}
         <footer style={{ marginTop: 'auto', padding: '1.5rem 0', borderTop: '1px solid var(--card-border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>

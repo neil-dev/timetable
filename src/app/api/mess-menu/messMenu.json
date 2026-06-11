@@ -1,0 +1,1211 @@
+{
+    "month": "June 2026",
+    "menu": {
+        "MONDAY": {
+            "breakfast": [
+                {
+                    "category": "BREAKFAST",
+                    "name": "IDLI",
+                    "isNonVeg": false
+                },
+                {
+                    "category": "Breakfast",
+                    "name": "MEDU VADA",
+                    "isNonVeg": false
+                },
+                {
+                    "category": "Breakfast",
+                    "name": "COCONUT CHUTNEY",
+                    "isNonVeg": false
+                },
+                {
+                    "category": "Breakfast",
+                    "name": "SAMBHAR",
+                    "isNonVeg": false
+                },
+                {
+                    "category": "Breakfast",
+                    "name": "Boiled Egg",
+                    "isNonVeg": true
+                },
+                {
+                    "category": "Breakfast",
+                    "name": "Cornflakes",
+                    "isNonVeg": false
+                },
+                {
+                    "category": "Fixed Items",
+                    "name": "Boiled Pulses",
+                    "isNonVeg": false
+                },
+                {
+                    "category": "Breakfast",
+                    "name": "BANANA",
+                    "isNonVeg": false
+                },
+                {
+                    "category": "Breakfast",
+                    "name": "Bread/Butter/Jam",
+                    "isNonVeg": false
+                },
+                {
+                    "category": "Breakfast",
+                    "name": "Tea/Coffee/Milk",
+                    "isNonVeg": false
+                }
+            ],
+            "lunch": [
+                {
+                    "category": "Salad",
+                    "name": "VEG SALAD",
+                    "isNonVeg": false
+                },
+                {
+                    "category": "Bread",
+                    "name": "CHAPATI/PHULKA",
+                    "isNonVeg": false
+                },
+                {
+                    "category": "Dal",
+                    "name": "ARHAR DAL",
+                    "isNonVeg": false
+                },
+                {
+                    "category": "Veg Dry",
+                    "name": "RAW BANANA DRY",
+                    "isNonVeg": false
+                },
+                {
+                    "category": "Gravy",
+                    "name": "MOONG CURRY",
+                    "isNonVeg": false
+                },
+                {
+                    "category": "Verity Rice",
+                    "name": "LEMON RICE",
+                    "isNonVeg": false
+                },
+                {
+                    "category": "White Rice",
+                    "name": "RICE",
+                    "isNonVeg": false
+                },
+                {
+                    "category": "Sambar/ Rasam",
+                    "name": "SAMBAR",
+                    "isNonVeg": false
+                },
+                {
+                    "category": "Curd/ Buttermilk",
+                    "name": "BUTTER MILK",
+                    "isNonVeg": false
+                },
+                {
+                    "category": "Pappad/ Fryums",
+                    "name": "PAPPAD/FRYUMS",
+                    "isNonVeg": false
+                },
+                {
+                    "category": "Pickle",
+                    "name": "PICKLE",
+                    "isNonVeg": false
+                },
+                {
+                    "category": "EGG",
+                    "name": "EGG CURRY",
+                    "isNonVeg": true
+                }
+            ],
+            "dinner": [
+                {
+                    "category": "Salad",
+                    "name": "VEG SALAD",
+                    "isNonVeg": false
+                },
+                {
+                    "category": "Bread",
+                    "name": "BATHURA /PHULKA",
+                    "isNonVeg": false
+                },
+                {
+                    "category": "Veg Gravy",
+                    "name": "CHOLE MASALA",
+                    "isNonVeg": false
+                },
+                {
+                    "category": "Veg Dry",
+                    "name": "MIX VEG PORIYAL",
+                    "isNonVeg": false
+                },
+                {
+                    "category": "Rice",
+                    "name": "VEG BIRIYANI",
+                    "isNonVeg": false
+                },
+                {
+                    "category": "Dal",
+                    "name": "LOWKI DAL",
+                    "isNonVeg": false
+                },
+                {
+                    "category": "Curd / Buttermilk",
+                    "name": "CURD",
+                    "isNonVeg": false
+                },
+                {
+                    "category": "Pappad / Fryums",
+                    "name": "FRYUMS",
+                    "isNonVeg": false
+                },
+                {
+                    "category": "Dessert",
+                    "name": "ICE-CREAM ( 50 ML ) 1 PIECE",
+                    "isNonVeg": false
+                },
+                {
+                    "category": "Pickle",
+                    "name": "PICKLE",
+                    "isNonVeg": false
+                }
+            ]
+        },
+        "TUESDAY": {
+            "breakfast": [
+                {
+                    "category": "BREAKFAST",
+                    "name": "METHI PARATHA",
+                    "isNonVeg": false
+                },
+                {
+                    "category": "Breakfast",
+                    "name": "SEMIYA UPMA",
+                    "isNonVeg": false
+                },
+                {
+                    "category": "Breakfast",
+                    "name": "VEG KORMA",
+                    "isNonVeg": false
+                },
+                {
+                    "category": "Breakfast",
+                    "name": "COCONUT CHUTNEY",
+                    "isNonVeg": false
+                },
+                {
+                    "category": "Breakfast",
+                    "name": "Boiled Egg",
+                    "isNonVeg": true
+                },
+                {
+                    "category": "Breakfast",
+                    "name": "Chocos",
+                    "isNonVeg": false
+                },
+                {
+                    "category": "Fixed Items",
+                    "name": "Boiled Pulses",
+                    "isNonVeg": false
+                },
+                {
+                    "category": "Breakfast",
+                    "name": "CUT FRIUTS (WATERMELON)",
+                    "isNonVeg": false
+                },
+                {
+                    "category": "Breakfast",
+                    "name": "Bread/Butter/Jam",
+                    "isNonVeg": false
+                },
+                {
+                    "category": "Breakfast",
+                    "name": "Tea/Coffee/Milk",
+                    "isNonVeg": false
+                }
+            ],
+            "lunch": [
+                {
+                    "category": "Salad",
+                    "name": "VEG SALAD",
+                    "isNonVeg": false
+                },
+                {
+                    "category": "Bread",
+                    "name": "CHAPATI/PHULKA",
+                    "isNonVeg": false
+                },
+                {
+                    "category": "Dal",
+                    "name": "DAL THADKA",
+                    "isNonVeg": false
+                },
+                {
+                    "category": "Veg Dry",
+                    "name": "PUMKIN DRY",
+                    "isNonVeg": false
+                },
+                {
+                    "category": "Gravy",
+                    "name": "VEG KOFTHA CURRY",
+                    "isNonVeg": false
+                },
+                {
+                    "category": "Verity Rice",
+                    "name": "COCONUT PULAO",
+                    "isNonVeg": false
+                },
+                {
+                    "category": "White Rice",
+                    "name": "RICE",
+                    "isNonVeg": false
+                },
+                {
+                    "category": "Sambar/ Rasam",
+                    "name": "SAMBAR",
+                    "isNonVeg": false
+                },
+                {
+                    "category": "Curd/ Buttermilk",
+                    "name": "BUTTER MILK",
+                    "isNonVeg": false
+                },
+                {
+                    "category": "Pappad/ Fryums",
+                    "name": "PAPPAD/FRYUMS",
+                    "isNonVeg": false
+                },
+                {
+                    "category": "Pickle",
+                    "name": "PICKLE",
+                    "isNonVeg": false
+                },
+                {
+                    "category": "Fish Curry",
+                    "name": "FISH CURRY",
+                    "isNonVeg": true
+                }
+            ],
+            "dinner": [
+                {
+                    "category": "Salad",
+                    "name": "VEG SALAD",
+                    "isNonVeg": false
+                },
+                {
+                    "category": "Bread",
+                    "name": "CHAPATI/PHULKA",
+                    "isNonVeg": false
+                },
+                {
+                    "category": "Veg Gravy",
+                    "name": "MUTTER MASALA",
+                    "isNonVeg": false
+                },
+                {
+                    "category": "Veg Dry",
+                    "name": "ALOO KARA PORIYAL",
+                    "isNonVeg": false
+                },
+                {
+                    "category": "Rice",
+                    "name": "COARN PULAO",
+                    "isNonVeg": false
+                },
+                {
+                    "category": "Dal",
+                    "name": "TOMATO PAPPU",
+                    "isNonVeg": false
+                },
+                {
+                    "category": "Curd / Buttermilk",
+                    "name": "CUCUMBER CHILLI RAITA",
+                    "isNonVeg": false
+                },
+                {
+                    "category": "Pappad / Fryums",
+                    "name": "PAPPAD",
+                    "isNonVeg": false
+                },
+                {
+                    "category": "Dessert",
+                    "name": "SWEET",
+                    "isNonVeg": false
+                },
+                {
+                    "category": "Pickle",
+                    "name": "PICKLE",
+                    "isNonVeg": false
+                },
+                {
+                    "category": "VEG (PANEER)",
+                    "name": "PANEER BUTTER MASALA",
+                    "isNonVeg": false
+                },
+                {
+                    "category": "NON VEG (CHICKEN)",
+                    "name": "CHICKEN CURRY",
+                    "isNonVeg": true
+                }
+            ]
+        },
+        "WEDNESDAY": {
+            "breakfast": [
+                {
+                    "category": "BREAKFAST",
+                    "name": "MASALA DOSA",
+                    "isNonVeg": false
+                },
+                {
+                    "category": "Breakfast",
+                    "name": "VEG WHEAT UPMA",
+                    "isNonVeg": false
+                },
+                {
+                    "category": "Breakfast",
+                    "name": "SAMBAR",
+                    "isNonVeg": false
+                },
+                {
+                    "category": "Breakfast",
+                    "name": "CORIYANDER CHUTNEY",
+                    "isNonVeg": false
+                },
+                {
+                    "category": "Breakfast",
+                    "name": "Boiled Egg",
+                    "isNonVeg": true
+                },
+                {
+                    "category": "Breakfast",
+                    "name": "Cornflakes",
+                    "isNonVeg": false
+                },
+                {
+                    "category": "Fixed Items",
+                    "name": "Boiled Pulses",
+                    "isNonVeg": false
+                },
+                {
+                    "category": "Breakfast",
+                    "name": "BANANA",
+                    "isNonVeg": false
+                },
+                {
+                    "category": "Breakfast",
+                    "name": "Bread/Butter/Jam",
+                    "isNonVeg": false
+                },
+                {
+                    "category": "Breakfast",
+                    "name": "Tea/Coffee/Milk",
+                    "isNonVeg": false
+                }
+            ],
+            "lunch": [
+                {
+                    "category": "Salad",
+                    "name": "VEG SALAD",
+                    "isNonVeg": false
+                },
+                {
+                    "category": "Bread",
+                    "name": "CHAPATI/PHULKA",
+                    "isNonVeg": false
+                },
+                {
+                    "category": "Dal",
+                    "name": "DAL FRY",
+                    "isNonVeg": false
+                },
+                {
+                    "category": "Veg Dry",
+                    "name": "CABBAGE PORIYAL",
+                    "isNonVeg": false
+                },
+                {
+                    "category": "Gravy",
+                    "name": "CHOLE MASALA",
+                    "isNonVeg": false
+                },
+                {
+                    "category": "Verity Rice",
+                    "name": "TAMARIND RICE",
+                    "isNonVeg": false
+                },
+                {
+                    "category": "White Rice",
+                    "name": "RICE",
+                    "isNonVeg": false
+                },
+                {
+                    "category": "Sambar/ Rasam",
+                    "name": "SAMBAR",
+                    "isNonVeg": false
+                },
+                {
+                    "category": "Curd/ Buttermilk",
+                    "name": "BUTTER MILK",
+                    "isNonVeg": false
+                },
+                {
+                    "category": "Pappad/ Fryums",
+                    "name": "PAPPAD/FRYUMS",
+                    "isNonVeg": false
+                },
+                {
+                    "category": "Pickle",
+                    "name": "PICKLE",
+                    "isNonVeg": false
+                },
+                {
+                    "category": "EGG",
+                    "name": "EGG MASALA",
+                    "isNonVeg": true
+                }
+            ],
+            "dinner": [
+                {
+                    "category": "Salad",
+                    "name": "VEG SALAD",
+                    "isNonVeg": false
+                },
+                {
+                    "category": "Bread",
+                    "name": "CHAPATI/PHULKA",
+                    "isNonVeg": false
+                },
+                {
+                    "category": "Veg Gravy",
+                    "name": "VEG MAKHANWALA",
+                    "isNonVeg": false
+                },
+                {
+                    "category": "Veg Dry",
+                    "name": "BEETROOT DRY",
+                    "isNonVeg": false
+                },
+                {
+                    "category": "Rice",
+                    "name": "JEERA PULAO",
+                    "isNonVeg": false
+                },
+                {
+                    "category": "Dal",
+                    "name": "DAL FRY",
+                    "isNonVeg": false
+                },
+                {
+                    "category": "Curd / Buttermilk",
+                    "name": "BUTTERMILK",
+                    "isNonVeg": false
+                },
+                {
+                    "category": "Pappad / Fryums",
+                    "name": "FRYUMS",
+                    "isNonVeg": false
+                },
+                {
+                    "category": "Dessert",
+                    "name": "SWEET",
+                    "isNonVeg": false
+                },
+                {
+                    "category": "Pickle",
+                    "name": "PICKLE",
+                    "isNonVeg": false
+                },
+                {
+                    "category": "VEG (PANEER)",
+                    "name": "KADAI PANEER",
+                    "isNonVeg": false
+                },
+                {
+                    "category": "NON VEG (CHICKEN)",
+                    "name": "PEPPER CHICKEN",
+                    "isNonVeg": true
+                }
+            ]
+        },
+        "THURSDAY": {
+            "breakfast": [
+                {
+                    "category": "BREAKFAST",
+                    "name": "POORI",
+                    "isNonVeg": false
+                },
+                {
+                    "category": "Breakfast",
+                    "name": "SEMIYA UPMA",
+                    "isNonVeg": false
+                },
+                {
+                    "category": "Breakfast",
+                    "name": "ALOO BAJHI",
+                    "isNonVeg": false
+                },
+                {
+                    "category": "Breakfast",
+                    "name": "COCONUT CHUTNEY",
+                    "isNonVeg": false
+                },
+                {
+                    "category": "Breakfast",
+                    "name": "Boiled Egg",
+                    "isNonVeg": true
+                },
+                {
+                    "category": "Breakfast",
+                    "name": "Chocos",
+                    "isNonVeg": false
+                },
+                {
+                    "category": "Fixed Items",
+                    "name": "Boiled Pulses",
+                    "isNonVeg": false
+                },
+                {
+                    "category": "Breakfast",
+                    "name": "CUT FRIUTS PAPPAYA",
+                    "isNonVeg": false
+                },
+                {
+                    "category": "Breakfast",
+                    "name": "Bread/Butter/Jam",
+                    "isNonVeg": false
+                },
+                {
+                    "category": "Breakfast",
+                    "name": "Tea/Coffee/Milk",
+                    "isNonVeg": false
+                }
+            ],
+            "lunch": [
+                {
+                    "category": "Salad",
+                    "name": "VEG SALAD",
+                    "isNonVeg": false
+                },
+                {
+                    "category": "Bread",
+                    "name": "CHAPATI/PHULKA",
+                    "isNonVeg": false
+                },
+                {
+                    "category": "Dal",
+                    "name": "PALAK DAL",
+                    "isNonVeg": false
+                },
+                {
+                    "category": "Veg Dry",
+                    "name": "BOTTLE GOURD DRY",
+                    "isNonVeg": false
+                },
+                {
+                    "category": "Gravy",
+                    "name": "MATTAR MASALA",
+                    "isNonVeg": false
+                },
+                {
+                    "category": "Verity Rice",
+                    "name": "THAWA PULAO",
+                    "isNonVeg": false
+                },
+                {
+                    "category": "White Rice",
+                    "name": "RICE",
+                    "isNonVeg": false
+                },
+                {
+                    "category": "Sambar/ Rasam",
+                    "name": "SAMBAR",
+                    "isNonVeg": false
+                },
+                {
+                    "category": "Curd/ Buttermilk",
+                    "name": "BUTTER MILK",
+                    "isNonVeg": false
+                },
+                {
+                    "category": "Pappad/ Fryums",
+                    "name": "PAPPAD/FRYUMS",
+                    "isNonVeg": false
+                },
+                {
+                    "category": "Pickle",
+                    "name": "PICKLE",
+                    "isNonVeg": false
+                },
+                {
+                    "category": "Fish Curry",
+                    "name": "FISH CURRY",
+                    "isNonVeg": true
+                }
+            ],
+            "dinner": [
+                {
+                    "category": "Salad",
+                    "name": "VEG SALAD",
+                    "isNonVeg": false
+                },
+                {
+                    "category": "Bread",
+                    "name": "CHAPATI/PHULKA",
+                    "isNonVeg": false
+                },
+                {
+                    "category": "Veg Gravy",
+                    "name": "SOYA ANDHRA STYLE CHILLI",
+                    "isNonVeg": false
+                },
+                {
+                    "category": "Veg Dry",
+                    "name": "THAWA VEG",
+                    "isNonVeg": false
+                },
+                {
+                    "category": "Rice",
+                    "name": "VEG FRIED RICE",
+                    "isNonVeg": false
+                },
+                {
+                    "category": "Dal",
+                    "name": "DALTHADUKA",
+                    "isNonVeg": false
+                },
+                {
+                    "category": "Curd / Buttermilk",
+                    "name": "BUTTERMILK",
+                    "isNonVeg": false
+                },
+                {
+                    "category": "Pappad / Fryums",
+                    "name": "PAPPAD",
+                    "isNonVeg": false
+                },
+                {
+                    "category": "Dessert",
+                    "name": "SWEET",
+                    "isNonVeg": false
+                },
+                {
+                    "category": "Pickle",
+                    "name": "PICKLE",
+                    "isNonVeg": false
+                },
+                {
+                    "category": "VEG (PANEER)",
+                    "name": "CHILLI PANEER",
+                    "isNonVeg": false
+                },
+                {
+                    "category": "NON VEG (CHICKEN)",
+                    "name": "CHILLI CHICKEN",
+                    "isNonVeg": true
+                }
+            ]
+        },
+        "FRIDAY": {
+            "breakfast": [
+                {
+                    "category": "BREAKFAST",
+                    "name": "IDLI",
+                    "isNonVeg": false
+                },
+                {
+                    "category": "Breakfast",
+                    "name": "ALOO POHA",
+                    "isNonVeg": false
+                },
+                {
+                    "category": "Breakfast",
+                    "name": "SAMBAR",
+                    "isNonVeg": false
+                },
+                {
+                    "category": "Breakfast",
+                    "name": "MINT CHUTNEY",
+                    "isNonVeg": false
+                },
+                {
+                    "category": "Breakfast",
+                    "name": "Boiled Egg",
+                    "isNonVeg": true
+                },
+                {
+                    "category": "Breakfast",
+                    "name": "Cornflakes",
+                    "isNonVeg": false
+                },
+                {
+                    "category": "Fixed Items",
+                    "name": "Boiled Pulses",
+                    "isNonVeg": false
+                },
+                {
+                    "category": "Breakfast",
+                    "name": "CUT FRIUTS (WATERMELON)",
+                    "isNonVeg": false
+                },
+                {
+                    "category": "Breakfast",
+                    "name": "Bread/Butter/Jam",
+                    "isNonVeg": false
+                },
+                {
+                    "category": "Breakfast",
+                    "name": "Tea/Coffee/Milk",
+                    "isNonVeg": false
+                }
+            ],
+            "lunch": [
+                {
+                    "category": "Salad",
+                    "name": "VEG SALAD",
+                    "isNonVeg": false
+                },
+                {
+                    "category": "Bread",
+                    "name": "CHAPATI/PHULKA",
+                    "isNonVeg": false
+                },
+                {
+                    "category": "Dal",
+                    "name": "YELLOW DAL",
+                    "isNonVeg": false
+                },
+                {
+                    "category": "Veg Dry",
+                    "name": "GREENS GREENMOONG KOOTU (DRY)",
+                    "isNonVeg": false
+                },
+                {
+                    "category": "Gravy",
+                    "name": "KADALA CURRY",
+                    "isNonVeg": false
+                },
+                {
+                    "category": "Verity Rice",
+                    "name": "JEERA RICE",
+                    "isNonVeg": false
+                },
+                {
+                    "category": "White Rice",
+                    "name": "RICE",
+                    "isNonVeg": false
+                },
+                {
+                    "category": "Sambar/ Rasam",
+                    "name": "SAMBAR",
+                    "isNonVeg": false
+                },
+                {
+                    "category": "Curd/ Buttermilk",
+                    "name": "BUTTER MILK",
+                    "isNonVeg": false
+                },
+                {
+                    "category": "Pappad/ Fryums",
+                    "name": "PAPPAD/FRYUMS",
+                    "isNonVeg": false
+                },
+                {
+                    "category": "Pickle",
+                    "name": "PICKLE",
+                    "isNonVeg": false
+                },
+                {
+                    "category": "EGG",
+                    "name": "EGG ROAST",
+                    "isNonVeg": true
+                }
+            ],
+            "dinner": [
+                {
+                    "category": "Salad",
+                    "name": "VEG SALAD",
+                    "isNonVeg": false
+                },
+                {
+                    "category": "Veg Gravy",
+                    "name": "VEG PANEER BIRIYANI",
+                    "isNonVeg": false
+                },
+                {
+                    "category": "Veg Dry",
+                    "name": "RAITHA",
+                    "isNonVeg": false
+                },
+                {
+                    "category": "Dal",
+                    "name": "CHICKEN DUM BIRYANI",
+                    "isNonVeg": true
+                },
+                {
+                    "category": "Curd / Buttermilk",
+                    "name": "MIRCHI KA SALAN",
+                    "isNonVeg": false
+                },
+                {
+                    "category": "Pappad / Fryums",
+                    "name": "RAITHA",
+                    "isNonVeg": false
+                },
+                {
+                    "category": "Dessert",
+                    "name": "RICE PHIRINI",
+                    "isNonVeg": false
+                },
+                {
+                    "category": "Pickle",
+                    "name": "PICKLE",
+                    "isNonVeg": false
+                }
+            ]
+        },
+        "SATURDAY": {
+            "breakfast": [
+                {
+                    "category": "BREAKFAST",
+                    "name": "PESARATTU",
+                    "isNonVeg": false
+                },
+                {
+                    "category": "Breakfast",
+                    "name": "KARABATH",
+                    "isNonVeg": false
+                },
+                {
+                    "category": "Breakfast",
+                    "name": "GREEN CHUTNEY",
+                    "isNonVeg": false
+                },
+                {
+                    "category": "Breakfast",
+                    "name": "COCONUT CHUTNEY",
+                    "isNonVeg": false
+                },
+                {
+                    "category": "Breakfast",
+                    "name": "Boiled Egg",
+                    "isNonVeg": true
+                },
+                {
+                    "category": "Breakfast",
+                    "name": "Chocos",
+                    "isNonVeg": false
+                },
+                {
+                    "category": "Fixed Items",
+                    "name": "Boiled Pulses",
+                    "isNonVeg": false
+                },
+                {
+                    "category": "Breakfast",
+                    "name": "BANANA",
+                    "isNonVeg": false
+                },
+                {
+                    "category": "Breakfast",
+                    "name": "Bread/Butter/Jam",
+                    "isNonVeg": false
+                },
+                {
+                    "category": "Breakfast",
+                    "name": "Tea/Coffee/Milk",
+                    "isNonVeg": false
+                }
+            ],
+            "lunch": [
+                {
+                    "category": "Salad",
+                    "name": "VEG SALAD",
+                    "isNonVeg": false
+                },
+                {
+                    "category": "Bread",
+                    "name": "CHAPATI/PHULKA",
+                    "isNonVeg": false
+                },
+                {
+                    "category": "Dal",
+                    "name": "DAL MAKKANI",
+                    "isNonVeg": false
+                },
+                {
+                    "category": "Veg Dry",
+                    "name": "SOYA CAPSICUM DRY",
+                    "isNonVeg": false
+                },
+                {
+                    "category": "Gravy",
+                    "name": "VEG CHETTINADU",
+                    "isNonVeg": false
+                },
+                {
+                    "category": "Verity Rice",
+                    "name": "TOMATO RICE",
+                    "isNonVeg": false
+                },
+                {
+                    "category": "White Rice",
+                    "name": "RICE",
+                    "isNonVeg": false
+                },
+                {
+                    "category": "Sambar/ Rasam",
+                    "name": "SAMBAR",
+                    "isNonVeg": false
+                },
+                {
+                    "category": "Curd/ Buttermilk",
+                    "name": "BUTTER MILK",
+                    "isNonVeg": false
+                },
+                {
+                    "category": "Pappad/ Fryums",
+                    "name": "PAPPAD/FRYUMS",
+                    "isNonVeg": false
+                },
+                {
+                    "category": "Pickle",
+                    "name": "PICKLE",
+                    "isNonVeg": false
+                },
+                {
+                    "category": "Fish Curry",
+                    "name": "FISH CURRY",
+                    "isNonVeg": true
+                }
+            ],
+            "dinner": [
+                {
+                    "category": "Salad",
+                    "name": "VEG SALAD",
+                    "isNonVeg": false
+                },
+                {
+                    "category": "Bread",
+                    "name": "CHAPATI/PHULKA",
+                    "isNonVeg": false
+                },
+                {
+                    "category": "Veg Gravy",
+                    "name": "PANEER MATTAR MASALA",
+                    "isNonVeg": false
+                },
+                {
+                    "category": "Veg Dry",
+                    "name": "YAM DRY",
+                    "isNonVeg": false
+                },
+                {
+                    "category": "Rice",
+                    "name": "MISHTI PULAO",
+                    "isNonVeg": false
+                },
+                {
+                    "category": "Dal",
+                    "name": "MOONG DAL THADKA",
+                    "isNonVeg": false
+                },
+                {
+                    "category": "Curd / Buttermilk",
+                    "name": "PLAIN CURD",
+                    "isNonVeg": false
+                },
+                {
+                    "category": "Pappad / Fryums",
+                    "name": "FRYUMS",
+                    "isNonVeg": false
+                },
+                {
+                    "category": "Dessert",
+                    "name": "SWEET",
+                    "isNonVeg": false
+                },
+                {
+                    "category": "Pickle",
+                    "name": "PICKLE",
+                    "isNonVeg": false
+                }
+            ]
+        },
+        "SUNDAY": {
+            "breakfast": [
+                {
+                    "category": "BREAKFAST",
+                    "name": "PAV",
+                    "isNonVeg": false
+                },
+                {
+                    "category": "Breakfast",
+                    "name": "VEG UTHAPAM",
+                    "isNonVeg": false
+                },
+                {
+                    "category": "Breakfast",
+                    "name": "BAJHI",
+                    "isNonVeg": false
+                },
+                {
+                    "category": "Breakfast",
+                    "name": "COCOCUNT RED CHUTNEY",
+                    "isNonVeg": false
+                },
+                {
+                    "category": "Breakfast",
+                    "name": "Boiled Egg",
+                    "isNonVeg": true
+                },
+                {
+                    "category": "Breakfast",
+                    "name": "Cornflakes",
+                    "isNonVeg": false
+                },
+                {
+                    "category": "Fixed Items",
+                    "name": "Boiled Pulses",
+                    "isNonVeg": false
+                },
+                {
+                    "category": "Breakfast",
+                    "name": "CUT FRIUTS (PAPAYA)",
+                    "isNonVeg": false
+                },
+                {
+                    "category": "Breakfast",
+                    "name": "Bread/Butter/Jam",
+                    "isNonVeg": false
+                },
+                {
+                    "category": "Breakfast",
+                    "name": "Tea/Coffee/Milk",
+                    "isNonVeg": false
+                }
+            ],
+            "lunch": [
+                {
+                    "category": "Salad",
+                    "name": "VEG SALAD",
+                    "isNonVeg": false
+                },
+                {
+                    "category": "Bread",
+                    "name": "CHAPATI/PHULKA",
+                    "isNonVeg": false
+                },
+                {
+                    "category": "Dal",
+                    "name": "BENGAL GRAM DAL FRY",
+                    "isNonVeg": false
+                },
+                {
+                    "category": "Veg Dry",
+                    "name": "ALOO BHINDI DRY",
+                    "isNonVeg": false
+                },
+                {
+                    "category": "Gravy",
+                    "name": "RAJMA RASEELA",
+                    "isNonVeg": false
+                },
+                {
+                    "category": "Verity Rice",
+                    "name": "VANGI BHAAT",
+                    "isNonVeg": false
+                },
+                {
+                    "category": "White Rice",
+                    "name": "RICE",
+                    "isNonVeg": false
+                },
+                {
+                    "category": "Sambar/ Rasam",
+                    "name": "SAMBAR",
+                    "isNonVeg": false
+                },
+                {
+                    "category": "Curd/ Buttermilk",
+                    "name": "BUTTER MILK",
+                    "isNonVeg": false
+                },
+                {
+                    "category": "Pappad/ Fryums",
+                    "name": "PAPPAD/FRYUMS",
+                    "isNonVeg": false
+                },
+                {
+                    "category": "Pickle",
+                    "name": "PICKLE",
+                    "isNonVeg": false
+                },
+                {
+                    "category": "EGG",
+                    "name": "EGG CURRY",
+                    "isNonVeg": true
+                }
+            ],
+            "dinner": [
+                {
+                    "category": "Salad",
+                    "name": "VEG SALAD",
+                    "isNonVeg": false
+                },
+                {
+                    "category": "Bread",
+                    "name": "CHAPATI/PHULKA",
+                    "isNonVeg": false
+                },
+                {
+                    "category": "Veg Gravy",
+                    "name": "LOBIYA MASALA",
+                    "isNonVeg": false
+                },
+                {
+                    "category": "Veg Dry",
+                    "name": "ALOO GOBI KASHMIRI DRY",
+                    "isNonVeg": false
+                },
+                {
+                    "category": "Rice",
+                    "name": "VEG PULAO",
+                    "isNonVeg": false
+                },
+                {
+                    "category": "Dal",
+                    "name": "DAL MAHARANI",
+                    "isNonVeg": false
+                },
+                {
+                    "category": "Curd / Buttermilk",
+                    "name": "BUTTERMILK",
+                    "isNonVeg": false
+                },
+                {
+                    "category": "Pappad / Fryums",
+                    "name": "FRYUMS",
+                    "isNonVeg": false
+                },
+                {
+                    "category": "Dessert",
+                    "name": "SWEET",
+                    "isNonVeg": false
+                },
+                {
+                    "category": "Pickle",
+                    "name": "PICKLE",
+                    "isNonVeg": false
+                },
+                {
+                    "category": "VEG (PANEER)",
+                    "name": "PANEER ROAST",
+                    "isNonVeg": false
+                },
+                {
+                    "category": "NON VEG (CHICKEN)",
+                    "name": "CHICKEN ROAST",
+                    "isNonVeg": true
+                }
+            ]
+        }
+    }
+}
