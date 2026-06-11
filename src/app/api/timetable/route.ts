@@ -340,7 +340,19 @@ export async function GET(request: Request) {
     // Return the JSON response if requested
     if (searchParams.get('format') === 'json') {
       jsonEvents.sort((a, b) => new Date(a.start).getTime() - new Date(b.start).getTime());
-      return NextResponse.json({ events: jsonEvents });
+      
+      const allTimeSlotsSet = new Set<string>();
+      for (const row of scheduleRows) {
+        if (!row.values) continue;
+        const timeCellObj = row.values[1];
+        const timeCell = timeCellObj && timeCellObj.formattedValue ? timeCellObj.formattedValue.trim() : '';
+        if (timeCell && timeCell.includes('-')) {
+          allTimeSlotsSet.add(timeCell);
+        }
+      }
+      const allTimeSlots = Array.from(allTimeSlotsSet);
+
+      return NextResponse.json({ events: jsonEvents, allTimeSlots });
     }
 
     // Return the .ics response

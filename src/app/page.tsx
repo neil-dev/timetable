@@ -50,10 +50,13 @@ export default function Home() {
   const [theme, setTheme] = useState<'light' | 'dark'>('dark');
   const [toastMessage, setToastMessage] = useState('');
   const [origin, setOrigin] = useState('');
+  const [allTimeSlots, setAllTimeSlots] = useState<string[]>([]);
+  const [showPdfImportAlert, setShowPdfImportAlert] = useState(false);
 
   // PDF Upload & Parse States
   const [parsingPdf, setParsingPdf] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const calendarWrapperRef = useRef<HTMLDivElement>(null);
 
   // Generation & Preview States
   const [generating, setGenerating] = useState(false);
@@ -183,6 +186,36 @@ export default function Home() {
     return monday;
   });
 
+  // Auto-scroll calendar view to the current day on mobile/tablet viewports
+  useEffect(() => {
+    if (previewTab !== 'calendar' || !generatedEvents) return;
+
+    // Use a short delay to allow DOM calculations to settle
+    const timer = setTimeout(() => {
+      const wrapper = calendarWrapperRef.current;
+      const todayEl = wrapper?.querySelector('.today-highlight') as HTMLElement;
+      if (wrapper && todayEl) {
+        const wrapperWidth = wrapper.clientWidth;
+        const todayLeft = todayEl.offsetLeft;
+        const todayWidth = todayEl.clientWidth;
+        
+        // Sticky Time Slot column width is 100px
+        const stickyWidth = 100;
+        
+        // Horizontal scroll position to center the current day column in the remaining scrollable area:
+        // targetScrollLeft = todayLeft - stickyWidth - (wrapperWidth - stickyWidth - todayWidth) / 2
+        const targetScrollLeft = todayLeft - stickyWidth - (wrapperWidth - stickyWidth - todayWidth) / 2;
+        
+        wrapper.scrollTo({
+          left: Math.max(0, targetScrollLeft),
+          behavior: 'smooth'
+        });
+      }
+    }, 100);
+
+    return () => clearTimeout(timer);
+  }, [previewTab, generatedEvents, calendarWeekStart]);
+
   // Get current origin for subscription link
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -236,6 +269,9 @@ export default function Home() {
           if (genRes.ok) {
             const genData = await genRes.json();
             setGeneratedEvents(genData.events || []);
+            if (genData.allTimeSlots) {
+              setAllTimeSlots(genData.allTimeSlots);
+            }
           }
         } catch (e) {
           console.error('Failed to auto-generate timetable:', e);
@@ -491,6 +527,7 @@ export default function Home() {
       setGeneratedEvents(null);
 
       showToast(`Auto-selected ${selections.length} courses from PDF!`);
+      setShowPdfImportAlert(true);
     } catch (err: any) {
       showToast(`PDF Import Error: ${err.message}`);
     } finally {
@@ -542,6 +579,9 @@ export default function Home() {
       
       const data = await res.json();
       setGeneratedEvents(data.events || []);
+      if (data.allTimeSlots) {
+        setAllTimeSlots(data.allTimeSlots);
+      }
       showToast('Timetable generated successfully!');
 
       // Update URL to match current selection
@@ -760,14 +800,16 @@ export default function Home() {
 
 
   const timeSlots = useMemo(() => {
-    if (!generatedEvents) return [];
-    const slots = Array.from(new Set(generatedEvents.map(e => e.timeSlot)));
+    let slots = allTimeSlots.length > 0 ? [...allTimeSlots] : [];
+    if (slots.length === 0 && generatedEvents) {
+      slots = Array.from(new Set(generatedEvents.map(e => e.timeSlot)));
+    }
     return slots.sort((a, b) => {
       const aStart = a.split('-')[0].trim().replace('.', ':');
       const bStart = b.split('-')[0].trim().replace('.', ':');
       return aStart.localeCompare(bStart);
     });
-  }, [generatedEvents]);
+  }, [allTimeSlots, generatedEvents]);
 
   return (
     <>
@@ -837,6 +879,36 @@ export default function Home() {
         )}
 
         <main id="main-content" style={{ display: 'flex', flexDirection: 'column', gap: '2.5rem' }}>
+          {/* Skeleton loader for the preview section when generating but events not loaded yet */}
+          {generating && !generatedEvents && (
+            <section className="glass-card" style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }} aria-busy="true" aria-live="polite">
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem', borderBottom: '1px solid var(--card-border)', paddingBottom: '1rem' }}>
+                <div style={{ width: '200px' }} className="skeleton-row">
+                  <div className="skeleton-text" style={{ width: '80%', height: '1.25rem' }}></div>
+                  <div className="skeleton-text" style={{ width: '60%', height: '0.8rem', marginTop: '0.25rem' }}></div>
+                </div>
+                <div style={{ width: '120px', height: '2.5rem', borderRadius: 'var(--radius-md)' }} className="skeleton-text"></div>
+              </div>
+              
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                <div style={{ display: 'flex', gap: '1.5rem', borderBottom: '1px solid var(--card-border)', paddingBottom: '0.75rem', overflow: 'hidden' }}>
+                  <div className="skeleton-text" style={{ width: '100px', height: '1rem', flexShrink: 0 }}></div>
+                  <div className="skeleton-text" style={{ width: '120px', height: '1rem', flexShrink: 0 }}></div>
+                  <div className="skeleton-text" style={{ width: '120px', height: '1rem', flexShrink: 0 }}></div>
+                  <div className="skeleton-text" style={{ width: '120px', height: '1rem', flexShrink: 0 }}></div>
+                  <div className="skeleton-text" style={{ width: '120px', height: '1rem', flexShrink: 0 }}></div>
+                </div>
+                {[1, 2, 3].map(i => (
+                  <div key={i} style={{ display: 'flex', gap: '1.5rem', alignItems: 'center', padding: '0.5rem 0', overflow: 'hidden' }}>
+                    <div className="skeleton-text" style={{ width: '100px', height: '1.5rem', flexShrink: 0 }}></div>
+                    <div className="skeleton-text" style={{ flex: 1, height: '2.5rem', borderRadius: '6px', minWidth: '120px' }}></div>
+                    <div className="skeleton-text" style={{ width: '80px', height: '1.5rem', flexShrink: 0 }}></div>
+                  </div>
+                ))}
+              </div>
+            </section>
+          )}
+
           {/* Timetable Preview & Actions Section */}
           {generatedEvents && (
             <section className="glass-card" style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
@@ -983,7 +1055,7 @@ export default function Home() {
                     </div>
                   </div>
 
-                  <div className="calendar-wrapper">
+                  <div className="calendar-wrapper" ref={calendarWrapperRef}>
                     <div className="calendar-grid" style={{ gridTemplateColumns: '100px repeat(7, minmax(130px, 1fr))', minWidth: '950px' }}>
                       {/* Headers */}
                       <div className="calendar-header-cell">Time Slot</div>
@@ -1710,6 +1782,55 @@ export default function Home() {
               type="button"
             >
               Close Guide
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* PDF Import Confirmation Alert Modal */}
+      {showPdfImportAlert && (
+        <div 
+          className="modal-overlay" 
+          onClick={() => setShowPdfImportAlert(false)}
+          role="none"
+        >
+          <div 
+            className="modal-card" 
+            onClick={e => e.stopPropagation()} 
+            style={{ maxWidth: '480px', textAlign: 'center', padding: '2.5rem 2rem' }}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="pdf-alert-title"
+          >
+            <div style={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              justifyContent: 'center', 
+              width: '60px', 
+              height: '60px', 
+              borderRadius: '50%', 
+              background: 'rgba(99, 102, 241, 0.1)', 
+              color: 'var(--primary-color)',
+              margin: '0 auto 1.5rem auto'
+            }}>
+              <Check size={32} />
+            </div>
+
+            <h2 id="pdf-alert-title" style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--text-primary)', marginBottom: '0.75rem' }}>
+              Courses Auto-Selected!
+            </h2>
+            
+            <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', lineHeight: '1.5', marginBottom: '1.5rem' }}>
+              All subjects from your PDF have been auto-selected. <strong>Please cross-check the selection and remove any non-Term IV subjects manually</strong>.
+            </p>
+
+            <button 
+              onClick={() => setShowPdfImportAlert(false)} 
+              className="btn btn-primary"
+              style={{ width: '100%', padding: '0.85rem 1.5rem' }}
+              type="button"
+            >
+              I Understand & Cross-Check
             </button>
           </div>
         </div>
