@@ -39,6 +39,7 @@ interface TimetableEvent {
   location: string;
   description: string;
   dateStr: string;
+  isoDate?: string;  // YYYY-MM-DD – reliable date key added by API
   timeSlot: string;
   room: string;
   abbr: string;
@@ -724,11 +725,14 @@ export default function Home() {
     for (let i = 0; i < 7; i++) {
       const d = new Date(calendarWeekStart);
       d.setDate(calendarWeekStart.getDate() + i);
+      // Build a reliable YYYY-MM-DD key for date comparison
+      const isoDate = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
       days.push({
         date: d,
         dayName: d.toLocaleDateString('en-US', { weekday: 'long' }),
         formatted: d.toLocaleDateString('en-US', { day: '2-digit', month: 'short' }),
         dateStr: d.toDateString(),
+        isoDate,
       });
     }
     return days;
@@ -738,30 +742,28 @@ export default function Home() {
   const filteredEventsForList = useMemo(() => {
     if (!generatedEvents) return [];
     
-    // Get today local date at midnight in IST
-    const today = getIstNow();
-    today.setHours(0, 0, 0, 0);
+    // Build today's ISO date (YYYY-MM-DD) in IST
+    const now = getIstNow();
+    const todayISO = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
     
-    // Get start (Monday) and end (Sunday) of current week
-    const dayOfWeek = today.getDay();
+    // Build start/end of current ISO week (Mon–Sun) in IST
+    const dayOfWeek = now.getDay(); // 0 = Sun
     const diffToMonday = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
-    const startOfWeek = new Date(today);
-    startOfWeek.setDate(today.getDate() + diffToMonday);
-    startOfWeek.setHours(0, 0, 0, 0);
-    
-    const endOfWeek = new Date(startOfWeek);
-    endOfWeek.setDate(startOfWeek.getDate() + 6);
-    endOfWeek.setHours(23, 59, 59, 999);
+    const monDate = new Date(now);
+    monDate.setDate(now.getDate() + diffToMonday);
+    const sunDate = new Date(monDate);
+    sunDate.setDate(monDate.getDate() + 6);
+    const weekStartISO = `${monDate.getFullYear()}-${String(monDate.getMonth() + 1).padStart(2, '0')}-${String(monDate.getDate()).padStart(2, '0')}`;
+    const weekEndISO   = `${sunDate.getFullYear()}-${String(sunDate.getMonth() + 1).padStart(2, '0')}-${String(sunDate.getDate()).padStart(2, '0')}`;
     
     const events = generatedEvents.filter(e => {
-      const eDate = new Date(e.dateStr);
-      if (isNaN(eDate.getTime())) return true;
-      eDate.setHours(0, 0, 0, 0);
+      // Use isoDate from API when available; fall back to parsing start timestamp
+      const eISO = e.isoDate || e.start.split('T')[0];
       
       if (listFilter === 'today') {
-        return eDate.getTime() === today.getTime();
+        return eISO === todayISO;
       } else if (listFilter === 'week') {
-        return eDate.getTime() >= startOfWeek.getTime() && eDate.getTime() <= endOfWeek.getTime();
+        return eISO >= weekStartISO && eISO <= weekEndISO;
       }
       return true; // full term
     });
@@ -952,7 +954,10 @@ export default function Home() {
   // Bus Schedule Memos & Helper
   // ----------------------------------------------------
   const getBusMinutes = (timeStr: string) => {
-    const [time, modifier] = timeStr.split(' ');
+    if (!timeStr) return 0;
+    const parts = timeStr.trim().toUpperCase().split(/\s+/);
+    if (parts.length < 2) return 0;
+    const [time, modifier] = parts;
     const [hoursStr, minutesStr] = time.split(':');
     let hours = parseInt(hoursStr, 10);
     const minutes = parseInt(minutesStr, 10);
@@ -961,7 +966,7 @@ export default function Home() {
       hours += 12;
     }
     if (modifier === 'AM' && hours === 12) {
-      hours = 0;
+      hours = 24; // Treated as end of day
     }
     return hours * 60 + minutes;
   };
@@ -1001,12 +1006,14 @@ export default function Home() {
     // Find next bus for today
     const next = sortedBuses.find(b => getBusMinutes(b.time) >= currentMinutes) || null;
     
-    // Find upcoming buses for today (in next 3 hours)
-    const upcoming = next 
+    // Find upcoming buses for today (strictly in next 3 hours)
+    const nextIndex = next ? sortedBuses.findIndex(b => b.slNo === next.slNo) : -1;
+    const upcoming = nextIndex !== -1
       ? sortedBuses
+          .slice(nextIndex + 1)
           .filter(b => {
             const bMin = getBusMinutes(b.time);
-            return b.slNo > next.slNo && bMin <= currentMinutes + 180;
+            return bMin <= currentMinutes + 180;
           })
           .slice(0, 4)
       : [];
@@ -1345,8 +1352,9 @@ export default function Home() {
                               {activeWeekDays.map(dayInfo => {
                                 const isToday = dayInfo.date.toDateString() === getIstNow().toDateString();
                                 const cellEvents = generatedEvents.filter(e => {
-                                  const eDate = new Date(e.dateStr);
-                                  return !isNaN(eDate.getTime()) && eDate.toDateString() === dayInfo.dateStr && e.timeSlot === slot;
+                                  // Use isoDate from API when available; fall back to the start timestamp
+                                  const eISO = e.isoDate || e.start.split('T')[0];
+                                  return eISO === dayInfo.isoDate && e.timeSlot === slot;
                                 });
 
                                 return (

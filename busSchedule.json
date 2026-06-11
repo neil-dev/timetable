@@ -254,5 +254,77 @@
         "via": "Phase V Campus (8:30pm)",
         "to": "C&D Housing",
         "tripsExtendedToMainGate": ""
+    },
+    {
+        "slNo": 33,
+        "time": "8:45 PM",
+        "from": "C&D Housing",
+        "via": "Phase V Campus",
+        "to": "PGP Auditorium",
+        "tripsExtendedToMainGate": ""
+    },
+    {
+        "slNo": 34,
+        "time": "9:00 PM",
+        "from": "PGP Auditorium",
+        "via": "Phase V Campus",
+        "to": "C&D Housing",
+        "tripsExtendedToMainGate": "Maingate"
+    },
+    {
+        "slNo": 35,
+        "time": "9:30 PM",
+        "from": "Maingate",
+        "via": "C&D Housing",
+        "to": "Phase V Campus (9:35pm)",
+        "tripsExtendedToMainGate": "PGP Auditorium"
+    },
+    {
+        "slNo": 36,
+        "time": "9:45 PM",
+        "from": "PGP Auditorium",
+        "via": "Phase V Campus",
+        "to": "C&D Housing",
+        "tripsExtendedToMainGate": ""
+    },
+    {
+        "slNo": 37,
+        "time": "10:15 PM",
+        "from": "C&D Housing",
+        "via": "Phase V Campus",
+        "to": "PGP Auditorium",
+        "tripsExtendedToMainGate": ""
+    },
+    {
+        "slNo": 38,
+        "time": "10:30 PM",
+        "from": "PGP Auditorium",
+        "via": "Phase V Campus",
+        "to": "C&D Housing",
+        "tripsExtendedToMainGate": "Maingate"
+    },
+    {
+        "slNo": 39,
+        "time": "11:00 PM",
+        "from": "Maingate",
+        "via": "C&D Housing",
+        "to": "Phase V Campus (11:05pm)",
+        "tripsExtendedToMainGate": "PGP Auditorium"
+    },
+    {
+        "slNo": 40,
+        "time": "11:15 PM",
+        "from": "PGP Auditorium",
+        "via": "Phase V Campus",
+        "to": "C&D Housing",
+        "tripsExtendedToMainGate": ""
+    },
+    {
+        "slNo": 41,
+        "time": "12:00 AM",
+        "from": "C&D Housing",
+        "via": "Phase V Campus",
+        "to": "PGP Auditorium",
+        "tripsExtendedToMainGate": ""
     }
 ]
