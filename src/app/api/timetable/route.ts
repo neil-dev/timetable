@@ -61,23 +61,68 @@ function getSheetsClient() {
 }
 
 // Helper: Matching Logic for Abbreviations and Sections
+// Normalise spaces around parentheses so e.g. "PF(FIN-Core)" == "PF (FIN-Core)"
+function normaliseAbbr(s: string): string {
+  return s.replace(/\s*\(/g, ' (').replace(/\)\s*/g, ')').trim();
+}
+
 function matchesAbbreviationAndSection(cellText: string, abbr: string, section: string): boolean {
   if (!cellText) return false;
-  const text = cellText.trim();
+  const text = cellText.replace(/\r?\n/g, ' ').trim();
+  const normAbbrInput = normaliseAbbr(abbr);
   
+  const checkAbbrs = [normAbbrInput];
+  if (normAbbrInput === 'RM') {
+    checkAbbrs.push('RTM');
+  } else if (normAbbrInput === 'RTM') {
+    checkAbbrs.push('RM');
+  }
+
   // Split by commas for cases like "GT-A, CONSULTING"
-  const parts = text.split(',').map(p => p.trim());
-  for (const part of parts) {
-    // 1. Exact match of the abbreviation (e.g. cell "LIDA" matches LIDA:A or LIDA:B)
-    if (part === abbr) return true;
-    
-    if (section) {
-      // 3. Match specific section suffix (e.g. cell "GT-B" matches GT:B)
-      if (part === `${abbr}-${section}`) return true;
-      if (part.startsWith(`${abbr}-${section}`)) return true;
-    } else {
-      // 4. If no section chosen, match any section suffix (e.g. cell "GT-A" matches GT)
-      if (part.startsWith(abbr + '-')) return true;
+  const rawParts = text.split(',').map(p => p.trim());
+  for (const raw of rawParts) {
+    const part = normaliseAbbr(raw);
+
+    for (const normAbbr of checkAbbrs) {
+      // Special handle for YMHC: starts with YMHC, YMHC , or YMHC-
+      if (normAbbr === 'YMHC') {
+        if (part === 'YMHC' || part.startsWith('YMHC ') || part.startsWith('YMHC-')) {
+          if (section && part.startsWith('YMHC-') && !part.startsWith(`YMHC-${section}`)) {
+            // mismatched section
+          } else {
+            return true;
+          }
+        }
+      }
+
+      // 1. Exact match of the abbreviation (e.g. cell "LIDA" matches LIDA:A or LIDA:B)
+      if (part === normAbbr) return true;
+      
+      if (section) {
+        // 2. Match specific section suffix before optional parenthetical qualifier
+        // Handles "DS-A (LSM-Core)" when abbr="DS (LSM-Core)" section="A"
+        const parenIdx = normAbbr.indexOf(' (');
+        if (parenIdx !== -1) {
+          const base = normAbbr.substring(0, parenIdx);       // e.g. "DS"
+          const qualifier = normAbbr.substring(parenIdx);     // e.g. " (LSM-Core)"
+          if (part === `${base}-${section}${qualifier}`) return true;
+          if (part.startsWith(`${base}-${section}${qualifier}`)) return true;
+          if (part === `${base}-${section}`) return true;
+        }
+        // 3. Plain section suffix (e.g. cell "GT-B" matches GT:B)
+        if (part === `${normAbbr}-${section}`) return true;
+        if (part.startsWith(`${normAbbr}-${section}`)) return true;
+      } else {
+        // 4. If no section chosen, match any section suffix (e.g. cell "GT-A" matches GT)
+        if (part.startsWith(normAbbr + '-')) return true;
+        // Also handle qualifier variants: "DS-A (LSM-Core)" matches abbr "DS (LSM-Core)"
+        const parenIdx = normAbbr.indexOf(' (');
+        if (parenIdx !== -1) {
+          const base = normAbbr.substring(0, parenIdx);
+          const qualifier = normAbbr.substring(parenIdx);
+          if (part.startsWith(`${base}-`) && part.endsWith(qualifier)) return true;
+        }
+      }
     }
   }
 
@@ -120,7 +165,10 @@ export async function GET(request: Request) {
     for (const row of courseRows) {
       if (row.length < 5) continue;
       const courseName = row[2] ? String(row[2]).trim() : '';
-      const abbr = row[4] ? String(row[4]).trim() : '';
+      let abbr = row[4] ? String(row[4]).trim() : '';
+      if (abbr === 'RM') {
+        abbr = 'RTM';
+      }
       const sectionVal = row[3] ? String(row[3]).trim() : '';
       const creditVal = row[5] ? String(row[5]).trim() : '';
       const credit = creditVal && !isNaN(parseFloat(creditVal)) ? parseFloat(creditVal) : 3;
@@ -285,8 +333,9 @@ export async function GET(request: Request) {
         const cell = row.values[colIdx];
         if (!cell) continue;
 
-        const cellValue = cell.formattedValue ? cell.formattedValue.trim() : '';
-        if (!cellValue) continue;
+        const cellValueRaw = cell.formattedValue ? cell.formattedValue.trim() : '';
+        if (!cellValueRaw) continue;
+        const cellValue = cellValueRaw.replace(/\r?\n/g, ' ');
 
         // Check if cell background is highlighted in red (cancelled)
         const bg = cell.userEnteredFormat && cell.userEnteredFormat.backgroundColor;
@@ -296,7 +345,17 @@ export async function GET(request: Request) {
         for (const target of requestedAbbrs) {
           if (matchesAbbreviationAndSection(cellValue, target.abbr, target.section)) {
             const courseName = abbrToNameMap[target.abbr] || target.abbr;
-            const room = ROOM_MAP[colIdx] || 'Unknown';
+            
+            let room = ROOM_MAP[colIdx] || 'Unknown';
+            if (target.abbr === 'YMHC') {
+              // Extract classroom from cellValue itself: whatever is after "YMHC" or "YMHC-A"
+              const regex = /^YMHC(?:-[A-Z]+)?\s*,?\s*(.*)$/i;
+              const match = cellValue.match(regex);
+              if (match && match[1] && match[1].trim()) {
+                room = match[1].trim();
+              }
+            }
+
             let eventSummary = target.section 
               ? `${courseName} (${target.abbr}-${target.section})`
               : `${courseName} (${target.abbr})`;
@@ -305,26 +364,33 @@ export async function GET(request: Request) {
               eventSummary = `[CANCELLED] ${eventSummary}`;
             }
 
+            const isRoomStr = room.toLowerCase().includes('room');
+            const eventLocation = isCancelled ? 'CANCELLED' : (isRoomStr ? room : `Room ${room}`);
+
             // Add Event to Calendar
             calendar.createEvent({
               start: startEventDate,
               end: endEventDate,
               summary: eventSummary,
-              location: isCancelled ? 'CANCELLED' : `Room ${room}`,
+              location: eventLocation,
               description: isCancelled 
                 ? `⚠️ CLASS CANCELLED\nScheduled slot: ${timeCell}\nCourse code: ${cellValue}`
                 : `Scheduled slot: ${timeCell}\nCourse code: ${cellValue}\nRoom assigned: ${room}`,
             });
 
+            // Build a reliable YYYY-MM-DD isoDate string from the already-parsed Date
+            const isoDate = `${parsedDate.getFullYear()}-${String(parsedDate.getMonth() + 1).padStart(2, '0')}-${String(parsedDate.getDate()).padStart(2, '0')}`;
+
             jsonEvents.push({
               start: startEventDate.toISOString(),
               end: endEventDate.toISOString(),
               summary: eventSummary,
-              location: isCancelled ? 'CANCELLED' : `Room ${room}`,
+              location: eventLocation,
               description: isCancelled 
                 ? `⚠️ CLASS CANCELLED\nScheduled slot: ${timeCell}\nCourse code: ${cellValue}`
                 : `Scheduled slot: ${timeCell}\nCourse code: ${cellValue}\nRoom assigned: ${room}`,
               dateStr: lastSeenDateStr,
+              isoDate,
               timeSlot: timeCell,
               room,
               abbr: target.abbr,

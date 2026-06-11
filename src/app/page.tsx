@@ -1276,7 +1276,7 @@ export default function Home() {
                                     </span>
                                   </div>
                                   <span className={`timeline-event-room ${e.isCancelled ? 'cancelled' : ''}`}>
-                                    {e.isCancelled ? 'CANCELLED' : `Room ${e.room}`}
+                                    {e.isCancelled ? 'CANCELLED' : (e.room && e.room.toLowerCase().includes('room') ? e.room : `Room ${e.room}`)}
                                   </span>
                                 </div>
                               ))}
@@ -1368,7 +1368,7 @@ export default function Home() {
                                           {e.abbr}{e.section ? `-${e.section}` : ''}
                                         </span>
                                         <span className="calendar-event-room-label">
-                                          {e.isCancelled ? 'CANCELLED' : `Room ${e.room}`}
+                                          {e.isCancelled ? 'CANCELLED' : (e.room && e.room.toLowerCase().includes('room') ? e.room : `Room ${e.room}`)}
                                         </span>
                                       </div>
                                     ))}

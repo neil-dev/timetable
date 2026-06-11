@@ -69,7 +69,10 @@ export async function POST(request: Request) {
     for (const row of courseRows) {
       if (row.length < 5) continue;
       const courseName = row[2] ? String(row[2]).trim() : '';
-      const abbr = row[4] ? String(row[4]).trim() : '';
+      let abbr = row[4] ? String(row[4]).trim() : '';
+      if (abbr === 'RM') {
+        abbr = 'RTM';
+      }
 
       if (!courseName || !abbr) continue;
       if (courseName === 'Course' || abbr === 'Abbr.') continue;
