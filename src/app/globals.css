@@ -2059,9 +2059,10 @@ html, body {
 
 .upcoming-bus-item {
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-start;
   align-items: center;
-  padding: 0.6rem 0.75rem;
+  gap: 1.25rem;
+  padding: 0.8rem 1rem;
   background: var(--input-bg);
   border: 1px solid var(--card-border);
   border-radius: var(--radius-sm);
@@ -2072,22 +2073,41 @@ html, body {
   border-color: var(--primary-color);
 }
 
-.upcoming-bus-time {
+.upcoming-bus-time-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  width: 4.5rem;
+  flex-shrink: 0;
+}
+
+.upcoming-bus-time-val {
+  font-size: 1.25rem;
   font-weight: 800;
   color: var(--text-primary);
+  line-height: 1.1;
+}
+
+.upcoming-bus-time-ampm {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
 }
 
 .upcoming-bus-route {
   display: flex;
   flex-direction: column;
-  align-items: flex-end;
-  font-size: 0.85rem;
-  color: var(--text-secondary);
+  align-items: flex-start;
+  font-size: 0.9rem;
+  color: var(--text-primary);
+  flex: 1;
 }
 
 .upcoming-bus-via {
   font-size: 0.75rem;
   color: var(--text-muted);
+  margin-top: 0.25rem;
 }
 
 .bus-table-wrapper {

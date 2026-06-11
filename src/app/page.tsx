@@ -338,11 +338,9 @@ export default function Home() {
     if (typeof window !== 'undefined') {
       setOrigin(window.location.origin);
       
-      // Initialize theme from localStorage or system preference
+      // Initialize theme from localStorage or default to dark
       const savedTheme = localStorage.getItem('theme') as 'light' | 'dark' | null;
-      const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-      
-      const initialTheme = savedTheme || (systemPrefersDark ? 'dark' : 'light');
+      const initialTheme = savedTheme || 'dark';
       setTheme(initialTheme);
       document.documentElement.setAttribute('data-theme', initialTheme);
     }
@@ -1702,7 +1700,17 @@ export default function Home() {
                       <div className="upcoming-buses-list">
                         {busCalculations.upcomingBuses.map((bus) => (
                           <div key={bus.slNo} className="upcoming-bus-item">
-                            <span className="upcoming-bus-time">{bus.time}</span>
+                            {(() => {
+                              const parts = bus.time.split(' ');
+                              const timeVal = parts[0];
+                              const ampm = parts[1] || '';
+                              return (
+                                <div className="upcoming-bus-time-wrapper">
+                                  <span className="upcoming-bus-time-val">{timeVal}</span>
+                                  {ampm && <span className="upcoming-bus-time-ampm">{ampm}</span>}
+                                </div>
+                              );
+                            })()}
                             <div className="upcoming-bus-route">
                               <span style={{ fontWeight: 700 }}>{bus.from} &rarr; {bus.to}</span>
                               <span className="upcoming-bus-via">Via: {bus.via || 'Direct'}</span>
