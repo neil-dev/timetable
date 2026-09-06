@@ -5,7 +5,7 @@ import fs from 'fs';
 import { getDocumentProxy } from 'unpdf';
 
 // Google Sheet Configurations
-const SPREADSHEET_ID = process.env.NEXT_PUBLIC_GOOGLE_SHEET_ID || '13-v2m0g3dr3UVo09i3qHLsMqZRyy_6zXf21AtDUtSOQ';
+const SPREADSHEET_ID = process.env.NEXT_PUBLIC_GOOGLE_SHEET_ID || '1QKqsiD6vPSXNLZOAH1p9sBA_LX8wvDyr8pC7oAw0hro';
 
 // Helper: Get Sheets Client
 function getSheetsClient() {
@@ -60,7 +60,7 @@ export async function POST(request: Request) {
     const sheets = getSheetsClient();
     const courseDetailsResponse = await sheets.spreadsheets.values.get({
       spreadsheetId: SPREADSHEET_ID,
-      range: "'Course Details'!A1:F100",
+      range: "'Course Details'!A1:F120",
     });
     const courseRows = courseDetailsResponse.data.values || [];
 
@@ -69,17 +69,20 @@ export async function POST(request: Request) {
     for (const row of courseRows) {
       if (row.length < 5) continue;
       const courseName = row[2] ? String(row[2]).trim() : '';
-      let abbr = row[4] ? String(row[4]).trim() : '';
-      if (abbr === 'RM') {
-        abbr = 'RTM';
+      let rawAbbr = row[4] ? String(row[4]).trim() : '';
+      if (rawAbbr === 'RM') {
+        rawAbbr = 'RTM';
       }
 
-      if (!courseName || !abbr) continue;
-      if (courseName === 'Course' || abbr === 'Abbr.') continue;
-      if (courseName.includes('Term IV') || abbr.includes('Term IV')) continue;
+      if (!courseName || !rawAbbr) continue;
+      if (courseName === 'Course' || rawAbbr === 'Abbr.') continue;
+      if (/term\s*(iv|v|\d+)/i.test(courseName) || /term\s*(iv|v|\d+)/i.test(rawAbbr)) continue;
 
-      if (!courseList.some(c => c.abbr === abbr)) {
-        courseList.push({ name: courseName, abbr });
+      const hyphenMatch = rawAbbr.match(/^([A-Za-z0-9]+)-([A-Z])$/);
+      const primaryAbbr = hyphenMatch ? hyphenMatch[1] : rawAbbr;
+
+      if (!courseList.some(c => c.abbr === primaryAbbr)) {
+        courseList.push({ name: courseName, abbr: primaryAbbr });
       }
     }
 

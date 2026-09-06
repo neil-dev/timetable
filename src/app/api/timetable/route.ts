@@ -5,7 +5,7 @@ import path from 'path';
 import fs from 'fs';
 
 // Constants
-const SPREADSHEET_ID = process.env.NEXT_PUBLIC_GOOGLE_SHEET_ID || '13-v2m0g3dr3UVo09i3qHLsMqZRyy_6zXf21AtDUtSOQ';
+const SPREADSHEET_ID = process.env.NEXT_PUBLIC_GOOGLE_SHEET_ID || '1QKqsiD6vPSXNLZOAH1p9sBA_LX8wvDyr8pC7oAw0hro';
 const ROOM_MAP: Record<number, string> = {
   2: 'D1',
   3: 'D2',
@@ -72,6 +72,11 @@ function matchesAbbreviationAndSection(cellText: string, abbr: string, section: 
   const normAbbrInput = normaliseAbbr(abbr);
   
   const checkAbbrs = [normAbbrInput];
+  // If normAbbrInput ends with -A, -B (e.g. GT-A, SCM-A), also check base abbreviation
+  const matchHyphen = normAbbrInput.match(/^([A-Za-z0-9]+)-([A-Z])$/);
+  if (matchHyphen) {
+    checkAbbrs.push(matchHyphen[1]);
+  }
   if (normAbbrInput === 'RM') {
     checkAbbrs.push('RTM');
   } else if (normAbbrInput === 'RTM') {
@@ -95,8 +100,15 @@ function matchesAbbreviationAndSection(cellText: string, abbr: string, section: 
         }
       }
 
-      // 1. Exact match of the abbreviation (e.g. cell "LIDA" matches LIDA:A or LIDA:B)
-      if (part === normAbbr) return true;
+      // 1. Exact match of the abbreviation (e.g. cell "AIB", "GT-A", "FMA (FIN-Core)")
+      if (part === normAbbr) {
+        // If part is e.g. "GT-A" and normAbbr is "GT-A", but user specified section "B", reject
+        const partMatch = part.match(/-([A-Z])$/);
+        if (section && partMatch && partMatch[1] !== section) {
+          continue;
+        }
+        return true;
+      }
       
       if (section) {
         // 2. Match specific section suffix before optional parenthetical qualifier
@@ -109,7 +121,7 @@ function matchesAbbreviationAndSection(cellText: string, abbr: string, section: 
           if (part.startsWith(`${base}-${section}${qualifier}`)) return true;
           if (part === `${base}-${section}`) return true;
         }
-        // 3. Plain section suffix (e.g. cell "GT-B" matches GT:B)
+        // 3. Plain section suffix (e.g. cell "GT-B" matches normAbbr="GT" section="B")
         if (part === `${normAbbr}-${section}`) return true;
         if (part.startsWith(`${normAbbr}-${section}`)) return true;
       } else {
@@ -155,7 +167,7 @@ export async function GET(request: Request) {
     // 2. Fetch Course Details (Course Name -> Abbreviation Map)
     const courseDetailsResponse = await sheets.spreadsheets.values.get({
       spreadsheetId: SPREADSHEET_ID,
-      range: "'Course Details'!A1:F100",
+      range: "'Course Details'!A1:F120",
     });
     const courseRows = courseDetailsResponse.data.values || [];
 
@@ -165,25 +177,17 @@ export async function GET(request: Request) {
     for (const row of courseRows) {
       if (row.length < 5) continue;
       const courseName = row[2] ? String(row[2]).trim() : '';
-      let abbr = row[4] ? String(row[4]).trim() : '';
-      if (abbr === 'RM') {
-        abbr = 'RTM';
+      let rawAbbr = row[4] ? String(row[4]).trim() : '';
+      if (rawAbbr === 'RM') {
+        rawAbbr = 'RTM';
       }
       const sectionVal = row[3] ? String(row[3]).trim() : '';
       const creditVal = row[5] ? String(row[5]).trim() : '';
       const credit = creditVal && !isNaN(parseFloat(creditVal)) ? parseFloat(creditVal) : 3;
 
-      if (!courseName || !abbr) continue;
-      if (courseName === 'Course' || abbr === 'Abbr.') continue;
-      if (courseName.includes('Term IV') || abbr.includes('Term IV')) continue;
-
-      abbrToNameMap[abbr] = courseName;
-      if (!nameToAbbrMap[courseName]) {
-        nameToAbbrMap[courseName] = [];
-      }
-      if (!nameToAbbrMap[courseName].includes(abbr)) {
-        nameToAbbrMap[courseName].push(abbr);
-      }
+      if (!courseName || !rawAbbr) continue;
+      if (courseName === 'Course' || rawAbbr === 'Abbr.') continue;
+      if (/term\s*(iv|v|\d+)/i.test(courseName) || /term\s*(iv|v|\d+)/i.test(rawAbbr)) continue;
 
       // Parse sections
       const sections: string[] = [];
@@ -193,15 +197,35 @@ export async function GET(request: Request) {
         const parts = sectionVal.split(/[,/]/).map(s => s.trim()).filter(Boolean);
         sections.push(...parts);
       }
+
+      // Check if rawAbbr has trailing section suffix like GT-A, SCM-A
+      const hyphenMatch = rawAbbr.match(/^([A-Za-z0-9]+)-([A-Z])$/);
+      const primaryAbbr = hyphenMatch ? hyphenMatch[1] : rawAbbr;
+      if (hyphenMatch && sections.length === 0) {
+        sections.push(hyphenMatch[2]);
+      }
+
+      abbrToNameMap[rawAbbr] = courseName;
+      abbrToNameMap[primaryAbbr] = courseName;
+
+      if (!nameToAbbrMap[courseName]) {
+        nameToAbbrMap[courseName] = [];
+      }
+      if (!nameToAbbrMap[courseName].includes(primaryAbbr)) {
+        nameToAbbrMap[courseName].push(primaryAbbr);
+      }
+      if (!nameToAbbrMap[courseName].includes(rawAbbr)) {
+        nameToAbbrMap[courseName].push(rawAbbr);
+      }
       
-      const existing = courseList.find(c => c.abbr === abbr);
+      const existing = courseList.find(c => c.name === courseName || c.abbr === primaryAbbr);
       if (existing) {
         existing.sections = Array.from(new Set([...(existing.sections || []), ...sections]));
         if (credit && !existing.credits) {
           existing.credits = credit;
         }
       } else {
-        courseList.push({ name: courseName, abbr, sections, credits: credit });
+        courseList.push({ name: courseName, abbr: primaryAbbr, sections, credits: credit });
       }
     }
 
@@ -246,6 +270,10 @@ export async function GET(request: Request) {
             if (matches.length === 1) {
               return matches[0];
             }
+            if (section) {
+              const secMatch = matches.find(m => m.endsWith(`-${section}`) || m === `${matches[0]}-${section}`);
+              if (secMatch) return secMatch;
+            }
             // Disambiguate by checking if the user search term mentions LSM, or prefer non-LSM PGP core/electives
             const containsLsm = name.toLowerCase().includes('lsm');
             const sorted = [...matches].sort((a, b) => {
@@ -282,13 +310,32 @@ export async function GET(request: Request) {
     }
 
     // 4. Fetch Schedule Sheet (fetch full grid data to inspect cell background formats)
-    const scheduleResponse = await sheets.spreadsheets.get({
-      spreadsheetId: SPREADSHEET_ID,
-      ranges: ["'Term IV Schedule'!A1:J800"],
-      includeGridData: true,
-    });
-    const sheetData = scheduleResponse.data.sheets?.[0]?.data?.[0];
-    const scheduleRows = sheetData?.rowData || [];
+    let scheduleRows: any[] = [];
+    try {
+      const scheduleResponse = await sheets.spreadsheets.get({
+        spreadsheetId: SPREADSHEET_ID,
+        ranges: ["'Term V Schedule'!A1:J1000"],
+        includeGridData: true,
+      });
+      const sheetData = scheduleResponse.data.sheets?.[0]?.data?.[0];
+      scheduleRows = sheetData?.rowData || [];
+    } catch (e: any) {
+      console.warn("Could not load 'Term V Schedule', attempting dynamic sheet discovery:", e.message);
+      const metaResponse = await sheets.spreadsheets.get({
+        spreadsheetId: SPREADSHEET_ID,
+        fields: 'sheets.properties.title',
+      });
+      const scheduleSheet = metaResponse.data.sheets?.find(s => 
+        s.properties?.title && s.properties.title.toLowerCase().includes('schedule')
+      )?.properties?.title || 'Term V Schedule';
+
+      const scheduleResponse = await sheets.spreadsheets.get({
+        spreadsheetId: SPREADSHEET_ID,
+        ranges: [`'${scheduleSheet}'!A1:J1000`],
+        includeGridData: true,
+      });
+      const sheetData = scheduleResponse.data.sheets?.[0]?.data?.[0];
+    }
 
     // Initialize iCal Calendar
     const calendar = new ICalCalendar({
@@ -356,8 +403,12 @@ export async function GET(request: Request) {
               }
             }
 
+            const baseAbbr = (target.section && target.abbr.endsWith(`-${target.section}`))
+              ? target.abbr.slice(0, -(target.section.length + 1))
+              : target.abbr;
+
             let eventSummary = target.section 
-              ? `${courseName} (${target.abbr}-${target.section})`
+              ? `${courseName} (${baseAbbr}-${target.section})`
               : `${courseName} (${target.abbr})`;
 
             if (isCancelled) {
@@ -393,7 +444,7 @@ export async function GET(request: Request) {
               isoDate,
               timeSlot: timeCell,
               room,
-              abbr: target.abbr,
+              abbr: baseAbbr,
               section: target.section,
               courseName,
               isCancelled: !!isCancelled,
