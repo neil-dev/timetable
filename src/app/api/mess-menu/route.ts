@@ -163,8 +163,8 @@ export async function GET() {
     // Process Google Sheet Rows (mimic Python openpyxl parsing)
     // 1. Get Month Title from cell A1 (index 0, 0)
     const firstCell = rows[0] && rows[0][0] ? String(rows[0][0]).trim() : '';
-    const monthMatch = /Menu\s*-\s*([A-Za-z]+\s+\d{4})/i.exec(firstCell);
-    const month = monthMatch ? monthMatch[1] : 'June 2026';
+    const monthMatch = /Menu\s*-\s*([A-Za-z]+\s+\d{4})/i.exec(firstCell) || /([A-Za-z]+\s+\d{4})/i.exec(firstCell);
+    const month = monthMatch ? monthMatch[1] : 'September 2026';
 
     // 2. Map days of week columns in row 2 (index 1)
     const days = ['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY'];

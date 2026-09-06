@@ -288,8 +288,8 @@ export default function Home() {
 
   // Weekly Calendar Navigation Date State (Monday of active week)
   const [calendarWeekStart, setCalendarWeekStart] = useState<Date>(() => {
-    // Return a stable fallback date for initial SSR to avoid hydration mismatch
-    return new Date('2026-06-08T00:00:00+05:30');
+    // Return a stable fallback date for initial SSR to avoid hydration mismatch (Term V start week)
+    return new Date('2026-09-07T00:00:00+05:30');
   });
 
   // Calculate actual week start on client mount
@@ -617,7 +617,7 @@ export default function Home() {
       const selections = data.selections || [];
 
       if (selections.length === 0) {
-        showToast('No matching Term IV courses found in the PDF.');
+        showToast('No matching Term V courses found in the PDF.');
         return;
       }
 
@@ -1062,7 +1062,7 @@ export default function Home() {
               <CalendarIcon size={24} />
             </div>
             <div>
-              <h1 className="brand-title">Term IV Timetable</h1>
+              <h1 className="brand-title">Term V Timetable</h1>
               <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Interactive Calendar Exporter</p>
             </div>
           </div>
@@ -1226,7 +1226,7 @@ export default function Home() {
                     <div style={{ padding: '3rem 1rem', textAlign: 'center', background: 'rgba(0,0,0,0.01)', borderRadius: '12px' }}>
                       <p style={{ fontWeight: 600, color: 'var(--text-secondary)' }}>No classes scheduled</p>
                       <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginTop: '0.25rem' }}>
-                        There are no scheduled lectures in Term IV for the selected courses in the Google Sheet database.
+                        There are no scheduled lectures in Term V for the selected courses in the Google Sheet database.
                       </p>
                     </div>
                   ) : previewTab === 'list' ? (
@@ -1858,7 +1858,7 @@ export default function Home() {
                     Students Mess Menu
                   </h2>
                   <p style={{ fontSize: '0.9rem', color: 'var(--text-muted)', marginTop: '0.1rem' }}>
-                    Month: <strong style={{ color: 'var(--text-primary)' }}>{messMenuData?.month || 'June 2026'}</strong>
+                    Month: <strong style={{ color: 'var(--text-primary)' }}>{messMenuData?.month || 'September 2026'}</strong>
                   </p>
                 </div>
 
@@ -2035,16 +2035,16 @@ export default function Home() {
         {/* Elegant Footer */}
         <footer style={{ marginTop: 'auto', padding: '1.5rem 0', borderTop: '1px solid var(--card-border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
           <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
-            Term IV Timetable Exporter &copy; {new Date().getFullYear()}
+            Term V Timetable Exporter &copy; {new Date().getFullYear()}
           </p>
           <div style={{ display: 'flex', gap: '1rem' }}>
             <a 
-              href="https://docs.google.com/spreadsheets/d/13-v2m0g3dr3UVo09i3qHLsMqZRyy_6zXf21AtDUtSOQ/edit?usp=sharing" 
+              href={`https://docs.google.com/spreadsheets/d/${process.env.NEXT_PUBLIC_GOOGLE_SHEET_ID || '1QKqsiD6vPSXNLZOAH1p9sBA_LX8wvDyr8pC7oAw0hro'}/edit?usp=sharing`} 
               target="_blank" 
               rel="noreferrer"
               style={{ fontSize: '0.8rem', color: 'var(--text-muted)', textDecoration: 'underline' }}
             >
-              Open Source Google Sheet
+              Source Google Sheet
             </a>
           </div>
         </footer>
@@ -2460,7 +2460,7 @@ export default function Home() {
             </h2>
             
             <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', lineHeight: '1.5', marginBottom: '1.5rem' }}>
-              All subjects from your PDF have been auto-selected. <strong>Please cross-check the selection and remove any non-Term IV subjects manually</strong>.
+              All subjects from your PDF have been auto-selected. <strong>Please cross-check the selection and remove any non-Term V subjects manually</strong>.
             </p>
 
             <button 
